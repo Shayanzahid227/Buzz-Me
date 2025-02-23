@@ -1,19 +1,21 @@
-// //import 'package:code_structure/core/constants/strings.dart';
+import 'package:code_structure/core/constants/strings.dart';
 
-// class AppAssets {
-//   ///
-//   /// Static Assets
-//   ///
-//   String app_logo = "$staticAssets/app_logo.png";
+class AppAssets {
+  ///
+  /// Splash screen
+  ///
+  String splashScreen = "$dynamicAssets/splsh.png";
+  String appLogo = "$staticAssets/buzzlogo.png";
+  String buzzmeText = "$staticAssets/buzzmetext.png";
+  String fbIcon = "$iconsAssets/fbIcon.png";
+  String googleIcon = "$iconsAssets/googleIcon.png";
+  String discoverBack = "$staticAssets/discoverBack.png";
 
-//   ///
-//   /// Dynamic Assets
-//   ///
+  ///
+  /// Dynamic Assets
+  ///
 
-//   String imagesdata = "$dynamicAssets/imagesdata.png";
-
-//   ///
-//   /// Icons Assets
-//   ///
-//   String search = "$iconsAssets/search.png";
-// }
+  ///
+  /// Icons Assets
+  ///
+}

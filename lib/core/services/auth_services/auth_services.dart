@@ -36,7 +36,7 @@ class SignInViewModel extends BaseViewModel {
       _isSelected = true;
     } else {
       _isSelected =
-          false; // if the above condition is not satified then return false
+          false; // if the above condition is not satisfied then return false
     }
   }
 }

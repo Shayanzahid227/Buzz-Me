@@ -10,7 +10,7 @@ class RootViewModel extends BaseViewModel {
 
   List<Widget> allScreen = [
     // call screen here according to index
-    LoginScreen()
+    // LoginScreen()
   ];
 
   ///

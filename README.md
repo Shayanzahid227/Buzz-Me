@@ -1,6 +1,8 @@
 # code_structure
 
-A new Flutter project.
+A Flutter project demonstrating clean code structure.
+
+## Project Structure
 
 ## Getting Started
 
