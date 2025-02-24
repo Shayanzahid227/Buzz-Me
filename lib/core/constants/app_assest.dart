@@ -10,6 +10,7 @@ class AppAssets {
   String fbIcon = "$iconsAssets/fbIcon.png";
   String googleIcon = "$iconsAssets/googleIcon.png";
   String discoverBack = "$staticAssets/discoverBack.png";
+  String cancelIcon = "$iconsAssets/cancelIcon.png";
 
   ///
   /// Dynamic Assets

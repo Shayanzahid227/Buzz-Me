@@ -1,8 +1,10 @@
+import 'package:code_structure/core/constants/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CircularButton extends StatelessWidget {
   final VoidCallback onPressed;
-  final IconData icon;
+  final String icon;
   final Color backgroundColor;
   final double radius;
 
@@ -10,15 +12,15 @@ class CircularButton extends StatelessWidget {
     super.key,
     required this.onPressed,
     required this.icon,
-    this.backgroundColor = const Color(0xfffeaeaea),
+    this.backgroundColor = darkGreyColor,
     this.radius = 18.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: radius * 2,
-      height: radius * 2,
+      width: 25.w,
+      height: 25.h,
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
@@ -28,9 +30,12 @@ class CircularButton extends StatelessWidget {
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero, // ensures no extra padding
         ),
-        child: Icon(
-          icon,
-          size: radius, // icon size proportional to the button
+        child: Padding(
+          padding: const EdgeInsets.all(7.0),
+          child: Image.asset(
+            icon,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

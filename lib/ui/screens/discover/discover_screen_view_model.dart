@@ -23,10 +23,11 @@ class DiscoverSCreenViewModel extends BaseViewModel {
   List<DiscoverModel> discoverList = [
     DiscoverModel(
       imageUrl:
-          'https://www.vogue.com/photos/6491c6d543823e841f8c2fc9/1:1/w_1424,h_1424,c_limit/cid_f_lj02spbw0-3.jpeg',
+          'https://s.abcnews.com/images/GMA/billie-eilish-gty-jt-201112_1605208921798_hpMain_16x9_992.jpg',
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
+      score: '23',
     ),
     DiscoverModel(
       imageUrl:
@@ -34,6 +35,7 @@ class DiscoverSCreenViewModel extends BaseViewModel {
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
+      score: '23',
     ),
     DiscoverModel(
       imageUrl:
@@ -41,6 +43,7 @@ class DiscoverSCreenViewModel extends BaseViewModel {
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
+      score: '23',
     ),
     DiscoverModel(
       imageUrl:
@@ -48,13 +51,15 @@ class DiscoverSCreenViewModel extends BaseViewModel {
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
+      score: '23',
     ),
     DiscoverModel(
       imageUrl:
-          'https://pyxis.nymag.com/v1/imgs/a5f/165/cf12f71bac777059733b1b9fdb498894d5-billie-eilish-new-album.1x.rsquare.w1400.jpg',
+          'https://s.abcnews.com/images/GMA/billie-eilish-gty-jt-201112_1605208921798_hpMain_16x9_992.jpg',
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
+      score: '23',
     ),
   ];
 }
