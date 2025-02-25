@@ -2,7 +2,10 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
+import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
+import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen_view_model.dart';
 import 'package:code_structure/ui/screens/user_profile/user_profile_view_model.dart';
 import 'package:flutter/material.dart';
@@ -18,21 +21,24 @@ class UserProfileScreen extends StatelessWidget {
       create: (context) => UserProfileViewModel(),
       child: Consumer<UserProfileViewModel>(
         builder: (context, model, child) => Scaffold(
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ///
-                ///  main container in which user images are shown
-                ///
-                _userProfile(model, context),
-
-                ///
-                ///  about Section
-                ///
-                _about(),
-              ],
-            ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _userProfile(model, context),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _about(),
+                    _friends(model, context),
+                    _basicProfile(model, context),
+                    _interesting(model, context),
+                    20.verticalSpace,
+                    _LookingFor(model, context),
+                    50.verticalSpace,
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -47,42 +53,45 @@ class UserProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(),
       child: Column(
         children: [
-          Swiper(
-            itemCount: model.userImagesList.length,
-            itemHeight: MediaQuery.of(context).size.height * 0.7,
-            itemWidth: double.infinity,
-            layout: SwiperLayout.STACK,
-            scrollDirection: Axis.vertical,
-            pagination: SwiperPagination(
-              alignment: Alignment.bottomRight,
-              margin: const EdgeInsets.only(top: 40, right: 20),
-              builder: DotSwiperPaginationBuilder(
-                color: whiteColor,
-                activeColor: greyColor,
+          SizedBox(
+            //height: MediaQuery.of(context).size.height * 0.7.h,
+            child: Swiper(
+              itemCount: model.userImagesList.length,
+              itemHeight: MediaQuery.of(context).size.height * 0.7,
+              itemWidth: double.infinity,
+              layout: SwiperLayout.STACK,
+              scrollDirection: Axis.vertical,
+              pagination: SwiperPagination(
+                alignment: Alignment.bottomRight,
+                margin: const EdgeInsets.only(top: 40, right: 20),
+                builder: DotSwiperPaginationBuilder(
+                  color: greyColor,
+                  activeColor: whiteColor,
+                ),
               ),
-            ),
-            itemBuilder: (context, index) {
-              return Container(
-                alignment: Alignment.bottomLeft,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: NetworkImage(
-                        model.userImagesList[index],
+              itemBuilder: (context, index) {
+                return Container(
+                  alignment: Alignment.bottomLeft,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: NetworkImage(
+                          model.userImagesList[index],
+                        ),
+                        fit: BoxFit.cover),
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10.w, vertical: 40.h),
+                        child: CircularButton(
+                            onPressed: () {}, icon: AppAssets().cancelIcon),
                       ),
-                      fit: BoxFit.cover),
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 40.h),
-                      child: CircularButton(
-                          onPressed: () {}, icon: AppAssets().cancelIcon),
-                    ),
-                  ],
-                ),
-              );
-            },
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
           20.verticalSpace,
 
@@ -122,7 +131,7 @@ class UserProfileScreen extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(right: 15.0),
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
                 child: CircleAvatar(
                     backgroundColor: lightGreyColor2,
                     radius: 15.r,
@@ -158,7 +167,7 @@ class UserProfileScreen extends StatelessWidget {
           ),
           10.verticalSpace,
           Divider(
-            color: lightGreyColor3,
+            color: lightGreyColor2,
             thickness: 1,
           ),
         ],
@@ -193,4 +202,206 @@ class UserProfileScreen extends StatelessWidget {
   ///
   /// friends Section
   ///
+  _friends(UserProfileViewModel model, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Friends',
+            style: style25B.copyWith(color: headingColor),
+          ),
+          Container(
+            height: 100.h,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: model.friendsImagesList.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10.0),
+                  child: CircleAvatar(
+                    radius: 30.r,
+                    backgroundImage: NetworkImage(
+                      model.friendsImagesList[index],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          10.verticalSpace,
+        ],
+      ),
+    );
+  }
+
+  ///
+  /// basic profile
+  ///
+  _basicProfile(UserProfileViewModel model, BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Basic Profile ',
+            style: style25B.copyWith(color: headingColor),
+          ),
+          20.verticalSpace,
+          Row(
+            children: [
+              Text(
+                'Height: ',
+                style: style16N.copyWith(color: subHeadingColor),
+              ),
+              Text(
+                '160cm',
+                style: style16N.copyWith(color: subheadingColor2),
+              ),
+            ],
+          ),
+          5.verticalSpace,
+          Row(
+            children: [
+              Text(
+                'weight: ',
+                style: style16N.copyWith(color: subHeadingColor),
+              ),
+              Text(
+                '65Kg',
+                style: style16N.copyWith(color: subheadingColor2),
+              ),
+            ],
+          ),
+          5.verticalSpace,
+          Row(
+            children: [
+              Text(
+                'Relationships status: ',
+                style: style16N.copyWith(color: subHeadingColor),
+              ),
+              Text(
+                'single',
+                style: style16N.copyWith(color: subheadingColor2),
+              ),
+            ],
+          ),
+          5.verticalSpace,
+          Row(
+            children: [
+              Text(
+                'joined date: ',
+                style: style16N.copyWith(color: subHeadingColor),
+              ),
+              Text(
+                'Feb 25,2025 ',
+                style: style16N.copyWith(color: subheadingColor2),
+              ),
+            ],
+          ),
+          20.verticalSpace,
+        ],
+      ),
+    );
+  }
+
+  ///
+  /// Interesting section
+  ///
+  _interesting(UserProfileViewModel model, BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Interesting ',
+            style: style25B.copyWith(color: headingColor),
+          ),
+          20.verticalSpace,
+
+          ///
+          ///   using wrap it will cover the space according to the text
+          ///
+          Wrap(
+            runSpacing: 15.0,
+            spacing: 18.0,
+            children: List.generate(
+              6,
+              (index) {
+                return CustomInterestingWidget(
+                    userProfileModel: UserProfileInterestingItemModel(
+                        title: model.interestingItemList[index]));
+              },
+            ),
+          )
+          // GridView.builder(
+          //   scrollDirection: Axis.vertical,
+          //   physics: ScrollPhysics(parent: NeverScrollableScrollPhysics()),
+          //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //       crossAxisCount: 3,
+          //       childAspectRatio: 3,
+          //       crossAxisSpacing: 10,
+          //       mainAxisSpacing: 10),
+          //   itemCount: 6,
+          //   shrinkWrap: true,
+          //   itemBuilder: (BuildContext context, int index) {
+          //     return CustomInterestingWidget();
+          //   },
+          // )
+        ],
+      ),
+    );
+  }
+
+  ///
+  /// looking for
+  ///
+  _LookingFor(UserProfileViewModel model, BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 15.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Looking For ',
+            style: style25B.copyWith(color: headingColor),
+          ),
+          20.verticalSpace,
+
+          ///
+          ///   using wrap it will cover the space according to the text
+          ///
+          Wrap(
+            runSpacing: 15.0,
+            spacing: 18.0,
+            children: List.generate(
+              model.lookingForItemList.length,
+              (index) {
+                return CustomLookkingForWidget(
+                    userProfileLookingForModel: UserProfileLookingForMOdel(
+                        title: model.lookingForItemList[index]));
+              },
+            ),
+          )
+          // GridView.builder(
+          //   scrollDirection: Axis.vertical,
+          //   physics: ScrollPhysics(parent: NeverScrollableScrollPhysics()),
+          //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          //       crossAxisCount: 3,
+          //       childAspectRatio: 3,
+          //       crossAxisSpacing: 10,
+          //       mainAxisSpacing: 10),
+          //   itemCount: 6,
+          //   shrinkWrap: true,
+          //   itemBuilder: (BuildContext context, int index) {
+          //     return CustomInterestingWidget();
+          //   },
+          // )
+        ],
+      ),
+    );
+  }
 }
