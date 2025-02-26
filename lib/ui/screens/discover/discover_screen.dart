@@ -145,16 +145,17 @@
 //******************************************************/
 import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
-import 'package:code_structure/core/model/discover_model.dart';
+
 import 'package:code_structure/custom_widgets/buzz%20me/discover_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-class ExampleScreen extends StatelessWidget {
-  const ExampleScreen({super.key});
+class DiscoverScreen extends StatelessWidget {
+  const DiscoverScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -175,98 +176,116 @@ class ExampleScreen extends StatelessWidget {
               child: Column(
                 children: [
                   20.h.verticalSpace,
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Discover',
-                          style: style25B.copyWith(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        CircleAvatar(
-                          backgroundColor: Color(0xffFFA180),
-                          radius: 25,
-                          child: Icon(
-                            Icons.filter_list_rounded,
-                            color: Colors.white,
-                            size: 40.h,
-                          ),
-
-                          // backgroundImage: AssetImage(AppAssets().fbIcon),
-                        ),
-                      ],
-                    ),
+                  customHeader(
+                    heading: 'Discover',
+                    headingColor: whiteColor,
                   ),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.84,
-                    width: double.infinity,
-                    child: Swiper(
-                      itemWidth: double.infinity,
-                      // itemWidth: MediaQuery.of(context).size.width * 0.9,
-                      itemHeight: MediaQuery.of(context).size.height * 0.84,
-                      indicatorLayout: PageIndicatorLayout.DROP,
-                      pagination: SwiperPagination(
-                        margin: const EdgeInsets.only(
-                            right: 300, top: 0, bottom: 600),
-                        alignment: Alignment.centerRight,
-                        builder: DotSwiperPaginationBuilder(
-                          color: Colors.grey,
-                          activeColor: Colors.white,
-                        ),
-                      ),
-                      loop: true,
-                      itemCount: model.discoverList.length,
-                      axisDirection: AxisDirection.up,
-                      scrollDirection: Axis.horizontal,
-                      layout: SwiperLayout
-                          .TINDER, // Use STACK layout for overlapping cards
-                      // customLayoutOption: CustomLayoutOption(
-                      //   startIndex: -1,
-                      //   stateCount: 3,
-                      // ),
-                      // ..addTranslate([
-                      //   Offset(0.0, 0.0), // Top card (no translation)
-                      //   Offset(0.0, 20.0), // Second card (slightly translated down)
-                      //   Offset(0.0, 40.0), // Third card (further translated down)
-                      // ])
-                      // ..addScale([
-                      //   1.0, // Top card (original scale)
-                      //   0.95, // Second card (slightly smaller)
-                      //   0.9, // Third card (even smaller)
-                      // ]),
-                      itemBuilder: (context, index) {
-                        return ColorFiltered(
-                          colorFilter: index == 0
-                              ? ColorFilter.mode(
-                                  Colors.grey.withOpacity(0.1),
-                                  BlendMode
-                                      .multiply) // Top card (no color filter)
-                              : index == 1
-                                  ? ColorFilter.mode(
-                                      Colors.transparent, BlendMode.multiply)
-                                  : ColorFilter.mode(
-                                      Colors.grey.withOpacity(0.14),
-                                      BlendMode
-                                          .multiply), // Cards below (slightly greyed out)
-
-                          child: CustomDiscoverWIdget(
-                              discoverModel: model.discoverList[index]),
-                        );
-                      },
-                    ),
-                  ),
+                  _allUsers(context, model),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  SizedBox _allUsers(BuildContext context, DiscoverSCreenViewModel model) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.84,
+      width: double.infinity,
+      child: Swiper(
+        itemWidth: double.infinity,
+        // itemWidth: MediaQuery.of(context).size.width * 0.9,
+        itemHeight: MediaQuery.of(context).size.height * 0.84,
+        indicatorLayout: PageIndicatorLayout.DROP,
+        pagination: SwiperPagination(
+          margin: const EdgeInsets.only(right: 300, top: 0, bottom: 600),
+          alignment: Alignment.centerRight,
+          builder: DotSwiperPaginationBuilder(
+            color: Colors.grey,
+            activeColor: Colors.white,
+          ),
+        ),
+        loop: true,
+        itemCount: model.discoverList.length,
+        axisDirection: AxisDirection.up,
+        scrollDirection: Axis.horizontal,
+        layout: SwiperLayout.TINDER, // Use STACK layout for overlapping cards
+        // customLayoutOption: CustomLayoutOption(
+        //   startIndex: -1,
+        //   stateCount: 3,
+        // ),
+        // ..addTranslate([
+        //   Offset(0.0, 0.0), // Top card (no translation)
+        //   Offset(0.0, 20.0), // Second card (slightly translated down)
+        //   Offset(0.0, 40.0), // Third card (further translated down)
+        // ])
+        // ..addScale([
+        //   1.0, // Top card (original scale)
+        //   0.95, // Second card (slightly smaller)
+        //   0.9, // Third card (even smaller)
+        // ]),
+        itemBuilder: (context, index) {
+          return ColorFiltered(
+            colorFilter: index == 0
+                ? ColorFilter.mode(Colors.grey.withOpacity(0.1),
+                    BlendMode.multiply) // Top card (no color filter)
+                : index == 1
+                    ? ColorFilter.mode(Colors.transparent, BlendMode.multiply)
+                    : ColorFilter.mode(
+                        Colors.grey.withOpacity(0.14),
+                        BlendMode
+                            .multiply), // Cards below (slightly greyed out)
+
+            child:
+                CustomDiscoverWIdget(discoverModel: model.discoverList[index]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class customHeader extends StatelessWidget {
+  final String? heading;
+  final Color? headingColor;
+  const customHeader({
+    required this.heading,
+    required this.headingColor,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20.0,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            heading!,
+            style: style25B.copyWith(
+                fontSize: 34, fontWeight: FontWeight.w700, color: headingColor),
+          ),
+          CircleAvatar(
+            backgroundColor: headingColor == whiteColor
+                ? Color(0xffFFA180)
+                : greyColor.shade300,
+            //  backgroundColor: Color(0xffFFA180),
+            radius: 25,
+            child: Icon(
+              Icons.filter_list_rounded,
+              color: Colors.white,
+              size: 40.h,
+            ),
+
+            // backgroundImage: AssetImage(AppAssets().fbIcon),
+          ),
+        ],
       ),
     );
   }

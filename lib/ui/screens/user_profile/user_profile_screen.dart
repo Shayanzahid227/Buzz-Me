@@ -6,7 +6,7 @@ import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for.dart';
-import 'package:code_structure/ui/screens/discover/discover_screen_view_model.dart';
+
 import 'package:code_structure/ui/screens/user_profile/user_profile_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

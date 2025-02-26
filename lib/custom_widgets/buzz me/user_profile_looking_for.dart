@@ -3,7 +3,7 @@ import 'package:code_structure/core/model/user_profile.dart';
 import 'package:flutter/material.dart';
 
 class CustomLookkingForWidget extends StatelessWidget {
-  UserProfileLookingForMOdel userProfileLookingForModel;
+  final UserProfileLookingForMOdel userProfileLookingForModel;
   CustomLookkingForWidget({
     required this.userProfileLookingForModel,
   });

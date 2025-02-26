@@ -22,4 +22,7 @@ const Color lightPinkColor = Color(0xffFF62A5);
 const Color lightGreyColor2 = Color.fromRGBO(0, 0, 0, 0.1);
 const Color lightGreyColor3 = Color(0xffF5F5F5);
 const Color lightGreyColor4 =
-    Color(0xff4A4A4A);// used in user profile screen in interesting section 
+    Color(0xff4A4A4A); // used in user profile screen in interesting section
+const Color darkBlueColor = Color(0xff3A63FF); // in gender Man section
+const Color skyBlueColor = Color(0xff62F9FF); // in gender section
+const Color indicatorColor = Color(0xffFF689A); // indicator text and indicator

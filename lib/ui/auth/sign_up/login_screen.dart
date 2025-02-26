@@ -1,6 +1,6 @@
 import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/custom_widgets/a_buttons/social_button.dart';
 import 'package:code_structure/ui/auth/sign_up/login_screen_view_model.dart';
-import 'package:code_structure/ui/widgets/social_login_button.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

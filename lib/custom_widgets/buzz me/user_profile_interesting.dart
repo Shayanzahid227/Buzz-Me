@@ -3,7 +3,7 @@ import 'package:code_structure/core/model/user_profile.dart';
 import 'package:flutter/material.dart';
 
 class CustomInterestingWidget extends StatelessWidget {
-  UserProfileInterestingItemModel userProfileModel;
+  final UserProfileInterestingItemModel userProfileModel;
   CustomInterestingWidget({
     required this.userProfileModel,
     super.key,

@@ -11,6 +11,9 @@ class AppAssets {
   String googleIcon = "$iconsAssets/googleIcon.png";
   String discoverBack = "$staticAssets/discoverBack.png";
   String cancelIcon = "$iconsAssets/cancelIcon.png";
+  String genderMan = "$iconsAssets/genderMan.png";
+  String genderWoman = "$iconsAssets/genderWoman.png";
+  String pic = "$dynamicAssets/pic.png";
 
   ///
   /// Dynamic Assets
