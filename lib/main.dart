@@ -1,5 +1,6 @@
 import 'package:code_structure/ui/abbas/call_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
+import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_.dart';
 import 'package:code_structure/ui/screens/user_profile/user_profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
         ),
         // initialRoute: '/',
         // onGenerateRoute: RouteGenerator.generateRoute,
-        home: NearbyAllUserScreen(),
+        home: FilterScreen(),
       ),
     );
   }

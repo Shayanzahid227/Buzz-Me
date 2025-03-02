@@ -26,3 +26,5 @@ const Color lightGreyColor4 =
 const Color darkBlueColor = Color(0xff3A63FF); // in gender Man section
 const Color skyBlueColor = Color(0xff62F9FF); // in gender section
 const Color indicatorColor = Color(0xffFF689A); // indicator text and indicator
+const Color tabBarColor = Color(0xffEFEFEF); // filter screen tabbar
+const Color tabBarTextColor = Color(0xffC1C0C9); // filter screen tabar text
