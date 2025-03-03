@@ -1,4 +1,6 @@
 import 'package:code_structure/ui/abbas/call_screen.dart';
+import 'package:code_structure/ui/auth/sign_up/login_screen.dart';
+import 'package:code_structure/ui/root_screen/root_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
 import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_.dart';
@@ -38,7 +40,7 @@ class MyApp extends StatelessWidget {
         ),
         // initialRoute: '/',
         // onGenerateRoute: RouteGenerator.generateRoute,
-        home: FilterScreen(),
+        home: LogInScreen(),
       ),
     );
   }

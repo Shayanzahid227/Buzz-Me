@@ -1,11 +1,15 @@
+import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/nearby_all_user.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
+import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_view_model.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/instance_manager.dart';
+import 'package:get/route_manager.dart';
 import 'package:provider/provider.dart';
 
 import '../../../custom_widgets/buzz me/header.dart';
@@ -24,11 +28,17 @@ class NearbyAllUserScreen extends StatelessWidget {
             body: Column(
               children: [
                 40.verticalSpace,
-                customHeader(heading: 'Nearby', headingColor: blackColor),
+                customHeader(
+                    heading: 'Nearby',
+                    headingColor: blackColor,
+                    image: AppAssets().fbIcon,
+                    onTap: () {
+                      Get.to(FilterScreen());
+                    }),
                 20.verticalSpace,
                 TabBar(
-                  tabAlignment: TabAlignment.start,
-                  isScrollable: true,
+                  tabAlignment: TabAlignment.fill,
+                  //    isScrollable: true,
                   indicatorColor: indicatorColor,
                   unselectedLabelColor: greyColor,
                   labelColor: indicatorColor,

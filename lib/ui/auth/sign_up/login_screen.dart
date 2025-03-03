@@ -1,6 +1,7 @@
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/custom_widgets/a_buttons/social_button.dart';
 import 'package:code_structure/ui/auth/sign_up/login_screen_view_model.dart';
+import 'package:code_structure/ui/root_screen/root_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,21 @@ class LogInScreen extends StatefulWidget {
 }
 
 class _LogInScreenState extends State<LogInScreen> {
+  init() async {
+    await Future.delayed(const Duration(seconds: 2), () {
+      // navigator and rout mean from one page to another
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => RootScreen(),
+      ));
+    });
+  }
+
+  @override
+  void initState() {
+    init();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(

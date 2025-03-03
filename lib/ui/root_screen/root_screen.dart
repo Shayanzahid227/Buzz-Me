@@ -1,3 +1,4 @@
+import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/strings.dart';
 import 'package:code_structure/custom_widgets/bottom_navigator_bar.dart';
 import 'package:code_structure/ui/root_screen/root_view_model.dart';
@@ -31,13 +32,16 @@ class RootScreen extends StatelessWidget {
           ///
           bottomNavigationBar: Container(
             height: 78.h,
-            decoration: BoxDecoration(color: Colors.white, boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  offset: const Offset(0, 1),
-                  blurRadius: 7.r,
-                  spreadRadius: 0),
-            ]),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    offset: const Offset(0, 1),
+                    blurRadius: 7.r,
+                    spreadRadius: 0),
+              ],
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -54,41 +58,65 @@ class RootScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                         color: model.selectedScreen == 0
-                            ? const Color(0xffE78377)
+                            ? Colors.white
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(13.r)),
                     child: Image.asset(
-                      '$staticAssets/home1.png',
+                      model.selectedScreen == 0
+                          ? AppAssets().discover2
+                          : AppAssets().discover1,
+
                       // 0 mean index 0
-                      color: model.selectedScreen == 0
-                          ? Colors.white
-                          : Colors.grey,
+                      color:
+                          model.selectedScreen == 0 ? Colors.grey : Colors.grey,
                       scale: 4,
                     ),
                   ),
                 ),
 
                 CustomBottomNavigatorBar(
-                  image: '$staticAssets/booking1.png',
+                  image: AppAssets().nearby1,
                   onTap: () {
                     model.updatedScreen(1);
                   },
                   iconColor:
-                      model.selectedScreen == 1 ? Colors.white : Colors.grey,
+                      model.selectedScreen == 1 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 1
-                      ? const Color(0xffE78377)
+                      ? Colors.transparent
                       : Colors.transparent,
                 ),
 
                 CustomBottomNavigatorBar(
-                  image: '$staticAssets/person1.png',
+                  image: AppAssets().Favorite1,
                   onTap: () {
                     model.updatedScreen(2);
                   },
                   iconColor:
-                      model.selectedScreen == 2 ? Colors.white : Colors.grey,
+                      model.selectedScreen == 2 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 2
-                      ? const Color(0xffE78377)
+                      ? Colors.transparent
+                      : Colors.transparent,
+                ),
+                CustomBottomNavigatorBar(
+                  image: AppAssets().Message1,
+                  onTap: () {
+                    model.updatedScreen(2);
+                  },
+                  iconColor:
+                      model.selectedScreen == 2 ? Colors.grey : Colors.grey,
+                  boxColor: model.selectedScreen == 2
+                      ? Colors.transparent
+                      : Colors.transparent,
+                ),
+                CustomBottomNavigatorBar(
+                  image: AppAssets().Profile1,
+                  onTap: () {
+                    model.updatedScreen(2);
+                  },
+                  iconColor:
+                      model.selectedScreen == 2 ? Colors.grey : Colors.grey,
+                  boxColor: model.selectedScreen == 2
+                      ? Colors.transparent
                       : Colors.transparent,
                 ),
               ],

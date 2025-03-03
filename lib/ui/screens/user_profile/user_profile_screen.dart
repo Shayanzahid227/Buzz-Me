@@ -21,12 +21,16 @@ class UserProfileScreen extends StatelessWidget {
       create: (context) => UserProfileViewModel(),
       child: Consumer<UserProfileViewModel>(
         builder: (context, model, child) => Scaffold(
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _userProfile(model, context),
-              Expanded(
-                child: ListView(
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _userProfile(model, context),
+                ListView(
+                  shrinkWrap:
+                      true, // Allows ListView to be inside SingleChildScrollView
+                  physics:
+                      NeverScrollableScrollPhysics(), // Prevent inner ListView scrolling
                   children: [
                     _about(),
                     _friends(model, context),
@@ -37,8 +41,8 @@ class UserProfileScreen extends StatelessWidget {
                     50.verticalSpace,
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -49,128 +53,144 @@ class UserProfileScreen extends StatelessWidget {
   /// profile with swiper images
   ///
   _userProfile(UserProfileViewModel model, BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(),
-      child: Column(
-        children: [
-          SizedBox(
-            //height: MediaQuery.of(context).size.height * 0.7.h,
-            child: Swiper(
-              itemCount: model.userImagesList.length,
-              itemHeight: MediaQuery.of(context).size.height * 0.7,
-              itemWidth: double.infinity,
-              layout: SwiperLayout.STACK,
-              scrollDirection: Axis.vertical,
-              pagination: SwiperPagination(
-                alignment: Alignment.bottomRight,
-                margin: const EdgeInsets.only(top: 40, right: 20),
-                builder: DotSwiperPaginationBuilder(
-                  color: greyColor,
-                  activeColor: whiteColor,
-                ),
-              ),
-              itemBuilder: (context, index) {
-                return Container(
-                  alignment: Alignment.bottomLeft,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: NetworkImage(
-                          model.userImagesList[index],
-                        ),
-                        fit: BoxFit.cover),
+    ScrollController _scrollController = ScrollController();
+    int _currentIndex = 0;
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (scrollNotification) {
+        if (scrollNotification is ScrollEndNotification &&
+            _currentIndex == model.userImagesList.length - 1) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: Duration(milliseconds: 1200),
+            curve: Curves.easeOut,
+          );
+        }
+        return false;
+      },
+      child: Container(
+        decoration: BoxDecoration(),
+        child: Column(
+          children: [
+            SizedBox(
+              //height: MediaQuery.of(context).size.height * 0.7.h,
+              child: Swiper(
+                itemCount: model.userImagesList.length,
+                itemHeight: MediaQuery.of(context).size.height * 0.6,
+                itemWidth: double.infinity,
+                layout: SwiperLayout.STACK,
+                scrollDirection: Axis.vertical,
+                pagination: SwiperPagination(
+                  alignment: Alignment.bottomRight,
+                  margin: const EdgeInsets.only(top: 40, right: 20),
+                  builder: DotSwiperPaginationBuilder(
+                    color: greyColor,
+                    activeColor: whiteColor,
                   ),
-                  child: Column(
+                ),
+                itemBuilder: (context, index) {
+                  return Container(
+                    alignment: Alignment.bottomLeft,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                          image: NetworkImage(
+                            model.userImagesList[index],
+                          ),
+                          fit: BoxFit.cover),
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 10.w, vertical: 40.h),
+                          child: CircularButton(
+                              onPressed: () {}, icon: AppAssets().cancelIcon),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            20.verticalSpace,
+
+            ///
+            ///  user name and ratting
+            ///
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: Row(
                     children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 10.w, vertical: 40.h),
-                        child: CircularButton(
-                            onPressed: () {}, icon: AppAssets().cancelIcon),
+                      Text(
+                        'Mary Burgess',
+                        style: style25B.copyWith(color: headingColor),
+                      ),
+                      8.horizontalSpace,
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              colors: [lightPinkColor, lightOrangeColor]),
+                          borderRadius: BorderRadius.circular(60.r),
+                          //  color: Colors.orange,
+                        ),
+                        height: 22.h,
+                        width: 50.w,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Icon(Icons.female),
+                            Text('23'),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                );
-              },
-            ),
-          ),
-          20.verticalSpace,
-
-          ///
-          ///  user name and ratting
-          ///
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Mary Burgess',
-                      style: style25B.copyWith(color: headingColor),
-                    ),
-                    8.horizontalSpace,
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: [lightPinkColor, lightOrangeColor]),
-                        borderRadius: BorderRadius.circular(60.r),
-                        //  color: Colors.orange,
-                      ),
-                      height: 22.h,
-                      width: 50.w,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Icon(Icons.female),
-                          Text('23'),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: CircleAvatar(
-                    backgroundColor: lightGreyColor2,
-                    radius: 15.r,
-                    child: Icon(
-                      Icons.more_horiz_rounded,
-                      color: greyColor,
-                    )),
-              )
-            ],
-          ),
-          10.verticalSpace,
-
-          ///
-          /// 2nd Row for status(settle / !settle) and location
-          ///
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0),
-            child: Row(
-              children: [
-                Text(
-                  'Seattle, ',
-                  style:
-                      style16.copyWith(color: lightGreyColor, fontSize: 15.sp),
-                ),
-                8.horizontalSpace,
-                Text(
-                  ' USA ',
-                  style:
-                      style16.copyWith(color: lightGreyColor, fontSize: 15.sp),
-                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: CircleAvatar(
+                      backgroundColor: lightGreyColor2,
+                      radius: 15.r,
+                      child: Icon(
+                        Icons.more_horiz_rounded,
+                        color: greyColor,
+                      )),
+                )
               ],
             ),
-          ),
-          10.verticalSpace,
-          Divider(
-            color: lightGreyColor2,
-            thickness: 1,
-          ),
-        ],
+            10.verticalSpace,
+
+            ///
+            /// 2nd Row for status(settle / !settle) and location
+            ///
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: Row(
+                children: [
+                  Text(
+                    'Seattle, ',
+                    style: style16.copyWith(
+                        color: lightGreyColor, fontSize: 15.sp),
+                  ),
+                  8.horizontalSpace,
+                  Text(
+                    ' USA ',
+                    style: style16.copyWith(
+                        color: lightGreyColor, fontSize: 15.sp),
+                  ),
+                ],
+              ),
+            ),
+            10.verticalSpace,
+            Divider(
+              color: lightGreyColor2,
+              thickness: 1,
+            ),
+          ],
+        ),
       ),
     );
   }

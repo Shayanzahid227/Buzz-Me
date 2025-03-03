@@ -180,6 +180,7 @@ class DiscoverScreen extends StatelessWidget {
                   customHeader(
                     heading: 'Discover',
                     headingColor: whiteColor,
+                    image: AppAssets().fbIcon,
                   ),
                   _allUsers(context, model),
                 ],
