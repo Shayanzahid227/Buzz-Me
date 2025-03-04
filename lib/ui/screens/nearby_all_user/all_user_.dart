@@ -2,10 +2,10 @@ import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/nearby_all_user.dart';
-import 'package:code_structure/ui/screens/discover/discover_screen.dart';
+
 import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_view_model.dart';
-import 'package:flutter/gestures.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/instance_manager.dart';
@@ -37,8 +37,8 @@ class NearbyAllUserScreen extends StatelessWidget {
                     }),
                 20.verticalSpace,
                 TabBar(
-                  tabAlignment: TabAlignment.fill,
-                  //    isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  isScrollable: true,
                   indicatorColor: indicatorColor,
                   unselectedLabelColor: greyColor,
                   labelColor: indicatorColor,

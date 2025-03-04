@@ -146,8 +146,6 @@
 import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
-import 'package:code_structure/core/constants/text_style.dart';
-
 import 'package:code_structure/custom_widgets/buzz%20me/discover_screen.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/header.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen_view_model.dart';
@@ -182,6 +180,7 @@ class DiscoverScreen extends StatelessWidget {
                     headingColor: whiteColor,
                     image: AppAssets().fbIcon,
                   ),
+                  20.verticalSpace,
                   _allUsers(context, model),
                 ],
               ),
@@ -192,7 +191,27 @@ class DiscoverScreen extends StatelessWidget {
     );
   }
 
-  SizedBox _allUsers(BuildContext context, DiscoverSCreenViewModel model) {
+  _allUsers(BuildContext context, DiscoverSCreenViewModel model) {
+    // return Padding(
+    //   padding: const EdgeInsets.symmetric(horizontal: 15.0),
+    //   child: Container(
+    //     height: MediaQuery.of(context).size.height / 1.4,
+    //     decoration: BoxDecoration(color: whiteColor),
+    //     child: Swiper(
+    //       itemCount: model.discoverList.length,
+    //       itemHeight: MediaQuery.of(context).size.height / 1.6,
+    //       itemWidth: double.infinity,
+    //       itemBuilder: (context, index) {
+    //         return Container(
+    //           height: 400,
+    //           width: 400,
+    //           child: CustomDiscoverWIdget(
+    //               discoverModel: model.discoverList[index]),
+    //         );
+    //       },
+    //     ),
+    //   ),
+    // );
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.84,
       width: double.infinity,
@@ -202,7 +221,10 @@ class DiscoverScreen extends StatelessWidget {
         itemHeight: MediaQuery.of(context).size.height * 0.84,
         indicatorLayout: PageIndicatorLayout.DROP,
         pagination: SwiperPagination(
-          margin: const EdgeInsets.only(right: 300, top: 0, bottom: 600),
+          margin: const EdgeInsets.only(
+            right: 20,
+            top: 0,
+          ),
           alignment: Alignment.centerRight,
           builder: DotSwiperPaginationBuilder(
             color: Colors.grey,
@@ -212,8 +234,8 @@ class DiscoverScreen extends StatelessWidget {
         loop: true,
         itemCount: model.discoverList.length,
         axisDirection: AxisDirection.up,
-        scrollDirection: Axis.horizontal,
-        layout: SwiperLayout.TINDER, // Use STACK layout for overlapping cards
+        scrollDirection: Axis.vertical,
+        layout: SwiperLayout.STACK, // Use STACK layout for overlapping cards
         // customLayoutOption: CustomLayoutOption(
         //   startIndex: -1,
         //   stateCount: 3,

@@ -2,7 +2,7 @@ import 'package:code_structure/core/enums/view_state_model.dart';
 import 'package:code_structure/core/others/base_view_model.dart';
 import 'package:code_structure/ui/screens/chat/chat_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
-import 'package:code_structure/ui/screens/filter/filter_screen.dart';
+
 import 'package:code_structure/ui/screens/my_profile/my_profile_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_.dart';
 import 'package:code_structure/ui/screens/user_profile/user_profile_screen.dart';

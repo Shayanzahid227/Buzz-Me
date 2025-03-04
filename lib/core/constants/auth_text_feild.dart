@@ -7,22 +7,22 @@ final authFieldDecoration = InputDecoration(
   hintStyle: style16,
   prefixIconColor: blackColor,
   suffixIconColor: blackColor,
-  fillColor: filledColor,
+  fillColor: fillColor,
   filled: true,
   border: InputBorder.none,
   enabledBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: textfiledBorderColor, width: 2.0),
-      borderRadius: BorderRadius.circular(16)),
+      borderSide: const BorderSide(color: fillColor, width: 2.0),
+      borderRadius: BorderRadius.circular(4)),
   focusedBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: textfiledBorderColor, width: 2.0),
-      borderRadius: BorderRadius.circular(16)),
+      borderSide: const BorderSide(color: fillColor, width: 2.0),
+      borderRadius: BorderRadius.circular(4)),
   errorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: textfiledBorderColor, width: 2.0),
-      borderRadius: BorderRadius.circular(16)),
+      borderSide: const BorderSide(color: fillColor, width: 2.0),
+      borderRadius: BorderRadius.circular(4)),
   disabledBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: textfiledBorderColor, width: 2.0),
-      borderRadius: BorderRadius.circular(16)),
+      borderSide: const BorderSide(color: fillColor, width: 2.0),
+      borderRadius: BorderRadius.circular(4)),
   focusedErrorBorder: OutlineInputBorder(
-      borderSide: const BorderSide(color: textfiledBorderColor, width: 2.0),
-      borderRadius: BorderRadius.circular(16)),
+      borderSide: const BorderSide(color: fillColor, width: 2.0),
+      borderRadius: BorderRadius.circular(4)),
 );

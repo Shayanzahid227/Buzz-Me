@@ -19,6 +19,11 @@ final style14 = TextStyle(
     color: Colors.white,
     fontWeight: FontWeight.w400,
     fontFamily: 'SF UI Display');
+final style17 = TextStyle(
+    fontSize: 17.sp,
+    color: Colors.white,
+    fontWeight: FontWeight.w600,
+    fontFamily: 'SF UI Display');
 
 ///***********************************    Normal             ********************************************************************** */
 
@@ -36,6 +41,11 @@ final style14N = TextStyle(
     fontSize: 14.sp,
     color: Colors.white,
     fontWeight: FontWeight.w300,
+    fontFamily: 'SF UI Display');
+final style17N = TextStyle(
+    fontSize: 17.sp,
+    color: Colors.white,
+    fontWeight: FontWeight.w600,
     fontFamily: 'SF UI Display');
 
 ///
@@ -55,4 +65,9 @@ final style14B = TextStyle(
     fontSize: 14.sp,
     color: Colors.white,
     fontWeight: FontWeight.bold,
+    fontFamily: 'SF UI Display');
+final style17B = TextStyle(
+    fontSize: 17.sp,
+    color: Colors.white,
+    fontWeight: FontWeight.w600,
     fontFamily: 'SF UI Display');
