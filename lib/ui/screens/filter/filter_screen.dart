@@ -366,7 +366,7 @@ class _FilterScreenState extends State<FilterScreen>
     );
   }
 
-//***************   container for selecting location    ****************
+  //***************   container for selecting location    ****************
   ///
   _selectLocation() {
     return Container(

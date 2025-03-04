@@ -1,4 +1,5 @@
 import 'package:code_structure/ui/auth/sign_up/login_screen.dart';
+import 'package:code_structure/ui/screens/favorites/favorites_screen.dart';
 import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
         ),
         // initialRoute: '/',
         // onGenerateRoute: RouteGenerator.generateRoute,
-        home: FilterScreen(),
+        home: FavoritesScreen(),
       ),
     );
   }
