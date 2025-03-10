@@ -1,5 +1,6 @@
 import 'package:code_structure/core/enums/view_state_model.dart';
 import 'package:code_structure/core/others/base_view_model.dart';
+import 'package:code_structure/ui/screens/Inbox/inbox_screen.dart';
 import 'package:code_structure/ui/screens/chat/chat_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
 
@@ -20,7 +21,7 @@ class RootViewModel extends BaseViewModel {
     NearbyAllUserScreen(),
 
     UserProfileScreen(),
-    ChatScreen(),
+    InboxScreen(),
     MyProfileScreen()
   ];
 

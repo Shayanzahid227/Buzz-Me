@@ -10,194 +10,169 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Color(0xFFF8F8F8).withAlpha(200),
         title: Text(
           'Message',
-          style: style25B.copyWith(
-            fontSize: 34.sp,
+          style: style17.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: TextFormField(
-                decoration: InputDecoration(
-                  hintText: 'Search...',
-                  hintStyle: style17.copyWith(
-                    color: Color(0xFF9B9B9B),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 26.r,
-                  ),
-                  fillColor: Color(0xFFE6E6E6),
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            Divider(
-              color: Color(0xFFDAD9E2),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Text(
-                'ONLINE USERS',
-                style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFC1C0C9)),
-              ),
-            ),
-            14.verticalSpace,
-            SizedBox(
-              height: 100.h,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.only(right: 16.w, left: 6.w),
-                child: Row(
-                  children: List.generate(
-                    10,
-                    (index) {
-                      return Padding(
-                        padding: EdgeInsets.only(left: 20.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Stack(
-                              children: [
-                                Container(
-                                  width: 60.w,
-                                  height: 60.h,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey,
-                                    image: DecorationImage(
-                                      image: AssetImage(AppAssets().pic),
-                                      fit: BoxFit.cover,
-                                    ),
-                                    borderRadius: BorderRadius.circular(50.r),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  bottom: 0,
-                                  child: Container(
-                                    width: 15.w,
-                                    height: 15.h,
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(50.r),
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2.w,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              'Danny Rice'.splitMapJoin(
-                                ' ',
-                                onMatch: (p0) => '\n',
-                              ),
-                              textAlign: TextAlign.center,
-                              style: style14.copyWith(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Column(
-                children: List.generate(
-                  10,
-                  (index) {
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 30.r,
-                            backgroundColor: Colors.grey,
-                            backgroundImage: AssetImage(AppAssets().pic),
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              padding: EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  colors: [
-                                    lightOrangeColor,
-                                    lightPinkColor,
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 1.w,
-                                ),
-                              ),
-                              child: Text(
-                                '13',
-                                style: style14.copyWith(
-                                  fontSize: 13.sp,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      title: Text(
-                        'Danny Rice',
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Hey! How is it going?',
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFFC1C0C9),
-                        ),
-                      ),
-                      trailing: Text(
-                        '12:00',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFFC1C0C9),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+        shape: const Border(
+          bottom: BorderSide(color: Colors.black26),
         ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: 10,
+              itemBuilder: (context, index) {
+                bool isMe = index % 2 == 0;
+                return Stack(
+                  children: [
+                    Container(
+                      margin: isMe
+                          ? EdgeInsets.only(
+                              right: 16.w,
+                              top: 8.h,
+                              bottom: 8.h,
+                              left: 100.w,
+                            )
+                          : EdgeInsets.only(
+                              right: 100.w,
+                              top: 8.h,
+                              bottom: 8.h,
+                              left: 16.w,
+                            ),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        gradient: isMe
+                            ? LinearGradient(
+                                colors: [
+                                  lightOrangeColor,
+                                  lightPinkColor,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              )
+                            : null,
+                        color: isMe ? null : Color(0xFFDADADA),
+                      ),
+                      child: Text(
+                        'asjdfakfja oljladf ilajs dfio ndsu nia dsa ijoa dfha sdhfs dfijsdf a sdf ds fad f adf  nkkj asjd  iasd adafdas adfasd ffasdf a ',
+                        style: style17.copyWith(
+                          color: isMe ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: isMe ? TextAlign.end : TextAlign.start,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -10,
+                      right: 0,
+                      child: CustomPaint(
+                        painter: BubbleTailPainter(),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.only(
+              top: 10.h,
+              bottom: 15.h,
+              left: 5.w,
+              right: 5.w,
+            ),
+            decoration: BoxDecoration(
+              color: Color(0xFFFAFAFA),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  offset: const Offset(0, -1),
+                  blurRadius: 7.r,
+                  spreadRadius: 0,
+                ),
+              ],
+              border: Border(
+                top: BorderSide(
+                  color: Colors.black26,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.camera_alt,
+                    color: lightGreyColor,
+                  ),
+                ),
+                Expanded(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: style14.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF9B9B9B),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 5.h,
+                      ),
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.send,
+                    color: lightOrangeColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class BubbleTailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    var paint = Paint()
+      ..shader = LinearGradient(
+        colors: [Colors.pink, Colors.orange],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromLTWH(0, 0, 10, 10));
+
+    var path = Path();
+    path.moveTo(10, 0);
+    path.lineTo(0, 10);
+    path.lineTo(0, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
