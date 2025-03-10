@@ -100,11 +100,11 @@ class RootScreen extends StatelessWidget {
                 CustomBottomNavigatorBar(
                   image: AppAssets().Message1,
                   onTap: () {
-                    model.updatedScreen(2);
+                    model.updatedScreen(3);
                   },
                   iconColor:
-                      model.selectedScreen == 2 ? Colors.grey : Colors.grey,
-                  boxColor: model.selectedScreen == 2
+                      model.selectedScreen == 3 ? Colors.grey : Colors.grey,
+                  boxColor: model.selectedScreen == 3
                       ? Colors.transparent
                       : Colors.transparent,
                 ),
