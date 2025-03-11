@@ -1,11 +1,22 @@
 import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/model/user_profile.dart';
+import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class EditProfileScreen extends StatelessWidget {
-  const EditProfileScreen({Key? key}) : super(key: key);
+  EditProfileScreen({Key? key}) : super(key: key);
 
+  List<String> interestingItemList = [
+    'Guitar & tabla',
+    'Music & Games',
+    'Fishing',
+    'Swimming',
+    'Book % Movies',
+    'Dancing & Singing',
+  ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,92 +47,117 @@ class EditProfileScreen extends StatelessWidget {
 
             // Profile Info
             _buildInfoRow("Username", "Landon Gibson"),
-            _buildInfoRow("Birthday", "April 18, 1993"),
-            _buildInfoRow("Gender", "Male"),
+            _buildInfoRow("Birthday", "April 18, 1993", showArrow: true),
+            _buildInfoRow("Gender", "Male", showArrow: true),
 
-            20.verticalSpace,
+            36.verticalSpace,
 
             // About you
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "About you",
-                  style: style25B,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "I'm looking for the right emoji. I enjoy hiking with friends :) I help them have uplifting experiences :) many hearts and love all around. :)",
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Height",
-                            style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text("183 cm",
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey[600])),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+            Text(
+              "About you",
+              style: style25B,
+            ),
+            10.verticalSpace,
+            Text(
+              "I'm looking for the right emoji. I enjoy hiking with friends I help them have uplifting experiences many hearts and love all around...",
+              style: style17.copyWith(
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
+            19.verticalSpace,
+            Divider(
+              height: 1,
+              color: Colors.grey[300],
             ),
 
-            const SizedBox(height: 20),
+            _buildInfoRow('Height', '183 cm'),
+            _buildInfoRow('Weight', '76 kg'),
 
             // Relationship status
-            _buildInfoRow("Relationship status", "Single"),
-            _buildInfoRow("Looking for", "Friends, Date More..."),
+            _buildInfoRow("Relationship status", "Single", showArrow: true),
+            _buildInfoRow("Looking for", "Friends, Date More...",
+                showArrow: true),
 
-            const SizedBox(height: 20),
+            30.verticalSpace,
 
             // Interesting
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Interesting",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  children: [
-                    _buildInterestChip("Cycling"),
-                    _buildInterestChip("Technology"),
-                    _buildInterestChip("Biking"),
-                    _buildInterestChip("Dancing"),
-                  ],
-                ),
-                const SizedBox(height: 10),
                 Text(
-                  "Add more interests",
-                  style: TextStyle(fontSize: 14, color: Colors.pink[300]),
+                  "Interesting",
+                  style: style25B,
+                ),
+                20.verticalSpace,
+                Wrap(
+                  runSpacing: 15.0,
+                  spacing: 18.0,
+                  children: List.generate(
+                    6,
+                    (index) {
+                      return CustomInterestingWidget(
+                          userProfileModel: UserProfileInterestingItemModel(
+                              title: interestingItemList[index]));
+                    },
+                  ),
+                ),
+                30.verticalSpace,
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 17.h),
+                    decoration: BoxDecoration(
+                        border: Border.all(color: lightPinkColor),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Center(
+                      child: Text(
+                        "Add more interests",
+                        style: TextStyle(fontSize: 14, color: lightPinkColor),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 20),
+            30.verticalSpace,
 
             // Location
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "Location",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: style25B,
                 ),
-                const SizedBox(height: 10),
-                _buildInfoRow("Current location", "Seattle, WA",
-                    showDivider: false),
+                20.verticalSpace,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      color: lightGreyColor,
+                    ),
+                    Text(
+                      "Current location",
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    Spacer(),
+                    Text(
+                      "Seattle, WA",
+                      style: style17.copyWith(
+                        color: lightGreyColor3,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+                20.verticalSpace,
+                Divider(
+                  height: 1,
+                  color: Colors.grey[300],
+                ),
               ],
             ),
 
@@ -132,22 +168,37 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool showDivider = true}) {
+  Widget _buildInfoRow(String label, String value,
+      {bool showDivider = true, bool showArrow = false}) {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          padding: EdgeInsets.symmetric(vertical: 17.h),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
                 label,
                 style: const TextStyle(fontSize: 16),
               ),
+              Spacer(),
               Text(
                 value,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: style17.copyWith(
+                  color: lightGreyColor3,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
+              10.horizontalSpace,
+              if (showArrow)
+                GestureDetector(
+                  onTap: () {},
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: lightGreyColor,
+                  ),
+                ),
             ],
           ),
         ),

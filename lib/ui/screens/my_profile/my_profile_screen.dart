@@ -1,6 +1,7 @@
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/ui/screens/edit_profile/edit_profile_screen.dart';
+import 'package:code_structure/ui/screens/wallet/wallet_home/wallet_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -217,8 +218,19 @@ class MyProfileScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          _buildMenuItem(Icons.account_balance_wallet,
-                              'My wallet', Colors.orange),
+                          _buildMenuItem(
+                            Icons.account_balance_wallet,
+                            'My wallet',
+                            Colors.orange,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WalletHomeScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           _buildDivider(),
                           _buildMenuItem(
                               Icons.verified_user, 'VIP center', Colors.blue),
@@ -272,34 +284,37 @@ class MyProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 14),
-        leading: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: color,
-          ),
+  Widget _buildMenuItem(IconData icon, String title, Color color, {onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 14),
+          leading: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+            ),
           ),
-        ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: Colors.grey,
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: Colors.grey,
+          ),
         ),
       ),
     );

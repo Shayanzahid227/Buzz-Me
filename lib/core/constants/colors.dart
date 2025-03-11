@@ -11,12 +11,13 @@ const Color borderColor = Color(0xffDAD9E2);
 //************************************************************/
 const Color whiteColor = Colors.white;
 const greyColor = Colors.grey;
+const Color lightBlueColor = Color(0xff3A87EF);
 const Color darkGreyColor = Color(0xff2E2E2E);
 const Color lightGreyColor = Color(0xffC1C0C9);
 const Color lightGreyColor2 = Color.fromRGBO(0, 0, 0, 0.1);
 const Color lightGreyColor3 = Color(0xff9B9B9B); //filter screen
 const Color lightGreyColor4 = Color(0xff4A4A4A);
-const Color lightGreyColor5 = Color(0xff4A4A4A); // filter screen
+const Color lightGreyColor5 = Color(0xffEBECF9); // filter screen
 const Color headingColor = Color(0xff4A4A4A);
 const Color subHeadingColor = Color(0xff262628);
 const Color subheadingColor2 = Color(0xff9B9B9B);
@@ -35,3 +36,5 @@ const Color fillColor2 =
     Color(0xffE6E6E6); //favorites screen in search bar and another
 
 const Color lightDividerColor = Color(0xFFF5F5F5);
+
+const Color scaffoldBackgroundColor = Color(0xFFF9FAFC); // wallet section
