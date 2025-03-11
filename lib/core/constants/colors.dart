@@ -33,3 +33,5 @@ const Color fillColor =
     Color(0xffEFEFEF); // filter screen location filed fill color
 const Color fillColor2 =
     Color(0xffE6E6E6); //favorites screen in search bar and another
+
+const Color lightDividerColor = Color(0xFFF5F5F5);
