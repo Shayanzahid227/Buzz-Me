@@ -52,6 +52,7 @@ dependencies:
   flutter_swiper_view: ^1.1.8
   another_xlider: ^3.0.2
   syncfusion_flutter_sliders: ^28.2.9
+  swipe_cards: ^2.0.0+1
 
 dev_dependencies:
   flutter_test:

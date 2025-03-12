@@ -70,32 +70,68 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
+  Widget _buildSearchBar(String hintText) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+      child: TextFormField(
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: style17.copyWith(
+            color: Color(0xFF9B9B9B),
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            size: 26.r,
+          ),
+          fillColor: Color(0xFFE6E6E6),
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.r),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListTile(String title, String subtitle, String trailing,
+      {Widget? leading, Widget? subtitleWidget}) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(vertical: 5.h),
+      leading: leading,
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 17.sp,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: subtitleWidget ??
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 15.sp,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFC1C0C9),
+            ),
+          ),
+      trailing: Text(
+        trailing,
+        style: TextStyle(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFFC1C0C9),
+        ),
+      ),
+    );
+  }
+
   Widget _buildChatTab() {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            child: TextFormField(
-              decoration: InputDecoration(
-                hintText: 'Search...',
-                hintStyle: style17.copyWith(
-                  color: Color(0xFF9B9B9B),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 26.r,
-                ),
-                fillColor: Color(0xFFE6E6E6),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          _buildSearchBar('Search...'),
           Divider(
             color: Color(0xFFDAD9E2),
           ),
@@ -191,8 +227,10 @@ class _InboxScreenState extends State<InboxScreen>
                         ),
                       );
                     },
-                    child: ListTile(
-                      contentPadding: EdgeInsets.zero,
+                    child: _buildListTile(
+                      'Danny Rice',
+                      'Hey! How is it going?',
+                      '12:00',
                       leading: Stack(
                         children: [
                           CircleAvatar(
@@ -228,29 +266,6 @@ class _InboxScreenState extends State<InboxScreen>
                           ),
                         ],
                       ),
-                      title: Text(
-                        'Danny Rice',
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Hey! How is it going?',
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFFC1C0C9),
-                        ),
-                      ),
-                      trailing: Text(
-                        '12:00',
-                        style: TextStyle(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFFC1C0C9),
-                        ),
-                      ),
                     ),
                   );
                 },
@@ -267,27 +282,7 @@ class _InboxScreenState extends State<InboxScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            child: TextFormField(
-              decoration: InputDecoration(
-                hintText: 'Search groups...',
-                hintStyle: style17.copyWith(
-                  color: Color(0xFF9B9B9B),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 26.r,
-                ),
-                fillColor: Color(0xFFE6E6E6),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          _buildSearchBar('Search groups...'),
           Divider(
             color: Color(0xFFDAD9E2),
           ),
@@ -308,39 +303,44 @@ class _InboxScreenState extends State<InboxScreen>
               children: List.generate(
                 8,
                 (index) {
-                  return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 5.h),
-                    leading: CircleAvatar(
-                      radius: 30.r,
-                      backgroundColor: Colors.grey.shade300,
-                      child: Icon(
-                        Icons.group,
-                        color: Colors.grey.shade700,
-                        size: 30.r,
-                      ),
-                    ),
-                    title: Text(
-                      'Group ${index + 1}',
-                      style: TextStyle(
-                        fontSize: 17.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${3 + index} members',
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFFC1C0C9),
-                      ),
-                    ),
-                    trailing: Text(
-                      '${index + 1}h ago',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFFC1C0C9),
-                      ),
+                  return _buildListTile(
+                    'Group ${index + 1}',
+                    '${3 + index} members',
+                    '${index + 1}h ago',
+                    leading: Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 30.r,
+                          backgroundColor: Colors.grey,
+                          backgroundImage: AssetImage(AppAssets().pic),
+                        ),
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  lightOrangeColor,
+                                  lightPinkColor,
+                                ],
+                              ),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 1.w,
+                              ),
+                            ),
+                            child: Text(
+                              '13',
+                              style: style14.copyWith(
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -353,97 +353,165 @@ class _InboxScreenState extends State<InboxScreen>
   }
 
   Widget _buildStoriesTab() {
+    final List<Map<String, dynamic>> stories = [
+      {'name': 'Joaquin Garcia', 'badge': '4'},
+      {'name': 'Amaranth', 'badge': ''},
+      {'name': 'April Janice', 'badge': ''},
+      {'name': 'Emilia', 'badge': '2'},
+    ];
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // My Stories Card
           Padding(
             padding: EdgeInsets.all(16.w),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 60.w,
-                  height: 60.h,
+                  width: double.infinity,
+                  height: 180.h,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(50.r),
-                  ),
-                  child: Icon(
-                    Icons.add,
-                    size: 30.r,
-                    color: lightPinkColor,
+                    color: Color(0xFFE8E8E8),
+                    borderRadius: BorderRadius.circular(12.r),
                   ),
                 ),
-                16.horizontalSpace,
-                Text(
-                  'Add to your story',
-                  style: TextStyle(
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
+                SizedBox(height: 12.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'My stories',
+                      style: TextStyle(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    Icon(Icons.more_horiz, color: Colors.grey, size: 20.r),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.remove_red_eye_outlined,
+                      size: 14.r,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '42 Watch',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 14.r,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '21 Comments',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Divider(
-            color: Color(0xFFDAD9E2),
-          ),
+          // Grid of Stories
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            child: Text(
-              'RECENT STORIES',
-              style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFC1C0C9)),
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12.w,
+                mainAxisSpacing: 12.h,
+                childAspectRatio: 1,
+              ),
+              itemCount: stories.length,
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    // Story Container
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Color(0xFFE8E8E8),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: stories[index]['badge'].isNotEmpty
+                            ? Border.all(
+                                color: Color(0xFFE3F2FD),
+                                width: 2.w,
+                              )
+                            : null,
+                      ),
+                    ),
+                    // Notification Badge
+                    if (stories[index]['badge'].isNotEmpty)
+                      Positioned(
+                        top: 8.h,
+                        right: 8.w,
+                        child: Container(
+                          width: 16.w,
+                          height: 16.h,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF2196F3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            stories[index]['badge'],
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // User Info at Bottom
+                    Positioned(
+                      bottom: 8.h,
+                      left: 8.w,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 24.w,
+                            height: 24.h,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            stories[index]['name'],
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return ListTile(
-                leading: Container(
-                  width: 60.w,
-                  height: 60.h,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [lightOrangeColor, lightPinkColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(50.r),
-                    border: Border.all(
-                      color: lightPinkColor,
-                      width: 2.w,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(2.w),
-                    child: CircleAvatar(
-                      backgroundImage: AssetImage(AppAssets().pic),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  'User ${index + 1}',
-                  style: TextStyle(
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  '${index + 1}h ago',
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFFC1C0C9),
-                  ),
-                ),
-              );
-            },
-          ),
+          SizedBox(height: 16.h),
         ],
       ),
     );
@@ -454,27 +522,7 @@ class _InboxScreenState extends State<InboxScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-            child: TextFormField(
-              decoration: InputDecoration(
-                hintText: 'Search calls...',
-                hintStyle: style17.copyWith(
-                  color: Color(0xFF9B9B9B),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 26.r,
-                ),
-                fillColor: Color(0xFFE6E6E6),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
+          _buildSearchBar('Search calls...'),
           Divider(
             color: Color(0xFFDAD9E2),
           ),
@@ -498,21 +546,16 @@ class _InboxScreenState extends State<InboxScreen>
                   bool isIncoming = index % 2 == 0;
                   bool isMissed = index % 3 == 0;
 
-                  return ListTile(
-                    contentPadding: EdgeInsets.symmetric(vertical: 5.h),
+                  return _buildListTile(
+                    'Contact ${index + 1}',
+                    '${isIncoming ? 'Incoming' : 'Outgoing'} ${isMissed ? '(Missed)' : ''}',
+                    '${index + 1}h ago',
                     leading: CircleAvatar(
                       radius: 30.r,
                       backgroundColor: Colors.grey,
                       backgroundImage: AssetImage(AppAssets().pic),
                     ),
-                    title: Text(
-                      'Contact ${index + 1}',
-                      style: TextStyle(
-                        fontSize: 17.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Row(
+                    subtitleWidget: Row(
                       children: [
                         Icon(
                           isIncoming ? Icons.call_received : Icons.call_made,
@@ -527,24 +570,6 @@ class _InboxScreenState extends State<InboxScreen>
                             fontWeight: FontWeight.w400,
                             color: Color(0xFFC1C0C9),
                           ),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${index + 1}h ago',
-                          style: TextStyle(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFC1C0C9),
-                          ),
-                        ),
-                        10.horizontalSpace,
-                        Icon(
-                          index % 2 == 0 ? Icons.videocam : Icons.call,
-                          color: lightPinkColor,
                         ),
                       ],
                     ),

@@ -4,6 +4,7 @@ import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/model/discover_model.dart';
 import 'package:code_structure/core/others/base_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:swipe_cards/swipe_cards.dart';
 
 class DiscoverSCreenViewModel extends BaseViewModel {
   List<Color> colorList = [
@@ -58,4 +59,36 @@ class DiscoverSCreenViewModel extends BaseViewModel {
       score: '23',
     ),
   ];
+
+  List<SwipeItem> _swipeItems = [];
+  MatchEngine? matchEngine;
+
+  DiscoverSCreenViewModel() {
+    _initializeCards();
+  }
+
+  void _initializeCards() {
+    _swipeItems = discoverList.map((discover) {
+      return SwipeItem(
+        content: discover,
+        likeAction: () {
+          // Handle like action
+        },
+        nopeAction: () {
+          // Handle nope action
+        },
+        superlikeAction: () {
+          // Handle superlike action
+        },
+      );
+    }).toList();
+
+    matchEngine = MatchEngine(swipeItems: _swipeItems);
+    notifyListeners();
+  }
+
+  void resetCards() {
+    _initializeCards();
+    notifyListeners();
+  }
 }

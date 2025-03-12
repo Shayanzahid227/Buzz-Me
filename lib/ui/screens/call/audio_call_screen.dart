@@ -17,42 +17,42 @@ class AudioCallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: transparentColor,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: Column(
+          children: [
+            Text(
+              userName,
+              style: style17.copyWith(
+                color: headingColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              'Calling...',
+              style: style14.copyWith(
+                color: subheadingColor2,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Top section with call info
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
-                    radius: 70.r,
+                    radius: 100.r,
                     backgroundImage: AssetImage(profileImage),
                   ),
-                  SizedBox(height: 24.h),
-                  Text(
-                    userName,
-                    style: style17.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 24.sp,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Calling...',
-                    style: style14.copyWith(
-                      color: Colors.grey,
-                    ),
-                  ),
                   SizedBox(height: 40.h),
-                  // Call duration timer (would be dynamic in a real app)
-                  Text(
-                    '00:45',
-                    style: style17.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -65,17 +65,17 @@ class AudioCallScreen extends StatelessWidget {
                 children: [
                   _buildCallControlButton(
                     icon: Icons.mic_off,
-                    color: Colors.grey,
+                    color: PrimarybuttonColor,
                     onPressed: () {},
                   ),
                   _buildCallControlButton(
                     icon: Icons.volume_up,
-                    color: Colors.grey,
+                    color: PrimarybuttonColor,
                     onPressed: () {},
                   ),
                   _buildCallControlButton(
                     icon: Icons.call_end,
-                    color: Colors.red,
+                    color: SecondarybuttonColor,
                     onPressed: () {
                       Navigator.pop(context);
                     },
@@ -100,12 +100,19 @@ class AudioCallScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(
           icon,
-          color: Colors.white,
+          color: whiteColor,
           size: 30.sp,
         ),
       ),

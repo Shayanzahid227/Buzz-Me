@@ -4,7 +4,7 @@ import 'package:code_structure/core/constants/text_style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class VideoCallScreen extends StatelessWidget {
+class VideoCallScreen extends StatefulWidget {
   final String userName;
   final String profileImage;
 
@@ -15,56 +15,81 @@ class VideoCallScreen extends StatelessWidget {
   });
 
   @override
+  State<VideoCallScreen> createState() => _VideoCallScreenState();
+}
+
+class _VideoCallScreenState extends State<VideoCallScreen> {
+  double selfViewX = 20.w;
+  double selfViewY = 100.h;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: lightGreyColor4,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        centerTitle: true,
+        title: Column(
+          children: [
+            Text(
+              widget.userName,
+              style: style17.copyWith(
+                color: whiteColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              '00:45',
+              style: style14.copyWith(
+                color: lightGreyColor,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: Stack(
         children: [
-          // Full screen background (would be camera feed in a real app)
+          // Full screen background
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(profileImage),
+                image: AssetImage(widget.profileImage),
                 fit: BoxFit.cover,
               ),
             ),
           ),
 
-          // Small self-view camera
+          // Draggable self-view camera
           Positioned(
-            top: 50.h,
-            right: 20.w,
-            child: Container(
-              width: 100.w,
-              height: 150.h,
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.white, width: 2),
+            left: selfViewX,
+            top: selfViewY,
+            child: Draggable(
+              feedback: _buildSelfViewCamera(),
+              childWhenDragging: Opacity(
+                opacity: 0.5,
+                child: _buildSelfViewCamera(),
               ),
-            ),
-          ),
+              child: _buildSelfViewCamera(),
+              onDragEnd: (details) {
+                setState(() {
+                  // Calculate new position within screen bounds
+                  final screenSize = MediaQuery.of(context).size;
+                  final selfViewSize = Size(100.w, 150.h);
 
-          // Call info at top
-          Positioned(
-            top: 50.h,
-            left: 20.w,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userName,
-                  style: style17.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  '00:45',
-                  style: style14.copyWith(
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
+                  selfViewX = details.offset.dx.clamp(
+                    0,
+                    screenSize.width - selfViewSize.width,
+                  );
+                  selfViewY = details.offset.dy.clamp(
+                    kToolbarHeight - 50.h, // Account for AppBar
+                    screenSize.height -
+                        selfViewSize.height -
+                        100.h, // Account for bottom controls
+                  );
+                });
+              },
             ),
           ),
 
@@ -78,28 +103,47 @@ class VideoCallScreen extends StatelessWidget {
               children: [
                 _buildCallControlButton(
                   icon: Icons.mic_off,
-                  color: Colors.grey.withOpacity(0.8),
+                  color: PrimarybuttonColor,
                   onPressed: () {},
                 ),
                 _buildCallControlButton(
                   icon: Icons.videocam_off,
-                  color: Colors.grey.withOpacity(0.8),
+                  color: PrimarybuttonColor,
                   onPressed: () {},
                 ),
                 _buildCallControlButton(
                   icon: Icons.call_end,
-                  color: Colors.red,
+                  color: SecondarybuttonColor,
                   onPressed: () {
                     Navigator.pop(context);
                   },
                 ),
                 _buildCallControlButton(
                   icon: Icons.flip_camera_ios,
-                  color: Colors.grey.withOpacity(0.8),
+                  color: PrimarybuttonColor,
                   onPressed: () {},
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelfViewCamera() {
+    return Container(
+      width: 100.w,
+      height: 150.h,
+      decoration: BoxDecoration(
+        color: darkGreyColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: whiteColor, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: blackColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -117,12 +161,19 @@ class VideoCallScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(
           icon,
-          color: Colors.white,
+          color: whiteColor,
           size: 30.sp,
         ),
       ),
