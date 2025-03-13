@@ -152,6 +152,7 @@ import 'package:code_structure/ui/screens/discover/discover_screen_view_model.da
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:swipe_cards/swipe_cards.dart';
 
 class DiscoverScreen extends StatelessWidget {
   const DiscoverScreen({super.key});
@@ -171,7 +172,7 @@ class DiscoverScreen extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-            child: SingleChildScrollView(
+            child: SafeArea(
               child: Column(
                 children: [
                   20.h.verticalSpace,
@@ -212,61 +213,73 @@ class DiscoverScreen extends StatelessWidget {
     //     ),
     //   ),
     // );
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.84,
-      width: double.infinity,
-      child: Swiper(
-        itemWidth: double.infinity,
-        // itemWidth: MediaQuery.of(context).size.width * 0.9,
-        itemHeight: MediaQuery.of(context).size.height * 0.84,
-        indicatorLayout: PageIndicatorLayout.DROP,
-        pagination: SwiperPagination(
-          margin: const EdgeInsets.only(
-            right: 20,
-            top: 0,
-          ),
-          alignment: Alignment.centerRight,
-          builder: DotSwiperPaginationBuilder(
-            color: Colors.grey,
-            activeColor: Colors.white,
+    return Stack(
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 40),
+          height: MediaQuery.of(context).size.height * 0.73,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.all(
+              Radius.circular(20),
+            ),
           ),
         ),
-        loop: true,
-        itemCount: model.discoverList.length,
-        axisDirection: AxisDirection.up,
-        scrollDirection: Axis.vertical,
-        layout: SwiperLayout.STACK, // Use STACK layout for overlapping cards
-        // customLayoutOption: CustomLayoutOption(
-        //   startIndex: -1,
-        //   stateCount: 3,
-        // ),
-        // ..addTranslate([
-        //   Offset(0.0, 0.0), // Top card (no translation)
-        //   Offset(0.0, 20.0), // Second card (slightly translated down)
-        //   Offset(0.0, 40.0), // Third card (further translated down)
-        // ])
-        // ..addScale([
-        //   1.0, // Top card (original scale)
-        //   0.95, // Second card (slightly smaller)
-        //   0.9, // Third card (even smaller)
-        // ]),
-        itemBuilder: (context, index) {
-          return ColorFiltered(
-            colorFilter: index == 0
-                ? ColorFilter.mode(Colors.grey.withOpacity(0.1),
-                    BlendMode.multiply) // Top card (no color filter)
-                : index == 1
-                    ? ColorFilter.mode(Colors.transparent, BlendMode.multiply)
-                    : ColorFilter.mode(
-                        Colors.grey.withOpacity(0.14),
-                        BlendMode
-                            .multiply), // Cards below (slightly greyed out)
-
-            child:
-                CustomDiscoverWIdget(discoverModel: model.discoverList[index]),
-          );
-        },
-      ),
+        Positioned(
+          top: 0,
+          bottom: 10,
+          left: 10,
+          right: 10,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.all(
+                Radius.circular(20),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.70,
+            width: double.infinity,
+            child: model.matchEngine != null
+                ? SwipeCards(
+                    matchEngine: model.matchEngine!,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ColorFiltered(
+                        colorFilter: index == 0
+                            ? ColorFilter.mode(Colors.grey.withOpacity(0.1),
+                                BlendMode.multiply)
+                            : index == 1
+                                ? ColorFilter.mode(
+                                    Colors.transparent, BlendMode.multiply)
+                                : ColorFilter.mode(
+                                    Colors.grey.withOpacity(0.14),
+                                    BlendMode.multiply),
+                        child: CustomDiscoverWIdget(
+                            discoverModel: model.discoverList[index]),
+                      );
+                    },
+                    onStackFinished: () {
+                      // Handle when all cards are swiped
+                      model.resetCards();
+                    },
+                    itemChanged: (SwipeItem item, int index) {
+                      // Handle item change if needed
+                    },
+                    upSwipeAllowed: true,
+                    leftSwipeAllowed: true,
+                    rightSwipeAllowed: true,
+                    fillSpace: false,
+                  )
+                : const Center(child: CircularProgressIndicator()),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -32,8 +32,9 @@ class CustomDiscoverWIdget extends StatelessWidget {
                   //   borderRadius: BorderRadius.circular(20),
 
                   child: Image(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    image: NetworkImage('${discoverModel.imageUrl}'),
+                    height: MediaQuery.of(context).size.height * 0.55,
+                    width: double.infinity,
+                    image: AssetImage('${discoverModel.imageUrl}'),
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Center(
@@ -53,10 +54,12 @@ class CustomDiscoverWIdget extends StatelessWidget {
                     '${discoverModel.name}',
                     style: style25.copyWith(fontSize: 25),
                   ),
-                  5.horizontalSpace,
+                  8.horizontalSpace,
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.orange,
+                      gradient: LinearGradient(
+                        colors: [lightOrangeColor, lightPinkColor],
+                      ),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
@@ -89,9 +92,10 @@ class CustomDiscoverWIdget extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: MediaQuery.of(context).size.height * 0.66,
-          left: MediaQuery.of(context).size.width * 0.4 -
-              90, // center the row of circle avatars
+          top: MediaQuery.of(context).size.height * 0.5,
+          right: 0,
+          left: 0,
+          // center the row of circle avatars
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

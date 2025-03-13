@@ -24,7 +24,7 @@ class DiscoverSCreenViewModel extends BaseViewModel {
   ];
   List<DiscoverModel> discoverList = [
     DiscoverModel(
-      imageUrl: AppAssets().discoverBack,
+      imageUrl: AppAssets().pic,
       name: 'Billie Eilish',
       additionalInfo: 'Singer',
       location: 'Los Angeles, California',
