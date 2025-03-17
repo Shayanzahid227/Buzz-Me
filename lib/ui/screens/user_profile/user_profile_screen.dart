@@ -2,6 +2,7 @@ import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
@@ -10,15 +11,20 @@ import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for
 import 'package:code_structure/ui/screens/user_profile/user_profile_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class UserProfileScreen extends StatelessWidget {
-  const UserProfileScreen({super.key});
+  final AppUser appUser;
+  const UserProfileScreen({
+    required this.appUser,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => UserProfileViewModel(),
+      create: (context) => UserProfileViewModel(appUser.uid ?? ''),
       child: Consumer<UserProfileViewModel>(
         builder: (context, model, child) => Scaffold(
           body: SingleChildScrollView(
@@ -44,6 +50,81 @@ class UserProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+          floatingActionButton: Container(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    model.giveLike(appUser.uid!);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            spreadRadius: 0,
+                            blurRadius: 10,
+                            offset: Offset(0, 2), // changes position of shadow
+                          )
+                        ]),
+                    child: Icon(
+                      Icons.heart_broken,
+                      color: Colors.red,
+                    ),
+                  ),
+                ),
+                20.horizontalSpace,
+                GestureDetector(
+                  onTap: () {
+                    model.giveSuperLike(appUser.uid!);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            spreadRadius: 0,
+                            blurRadius: 10,
+                            offset: Offset(0, 2), // changes position of shadow
+                          )
+                        ]),
+                    child: Icon(
+                      Icons.star,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+                20.horizontalSpace,
+                Container(
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          spreadRadius: 0,
+                          blurRadius: 10,
+                          offset: Offset(0, 2), // changes position of shadow
+                        )
+                      ]),
+                  child: Icon(
+                    Icons.message,
+                    color: Colors.blue,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
         ),
       ),
     );
@@ -59,7 +140,7 @@ class UserProfileScreen extends StatelessWidget {
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollNotification) {
         if (scrollNotification is ScrollEndNotification &&
-            _currentIndex == model.userImagesList.length - 1) {
+            _currentIndex == appUser.images!.length - 1) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
             duration: Duration(milliseconds: 1200),
@@ -75,11 +156,12 @@ class UserProfileScreen extends StatelessWidget {
             SizedBox(
               //height: MediaQuery.of(context).size.height * 0.7.h,
               child: Swiper(
-                itemCount: model.userImagesList.length,
+                itemCount: appUser.images?.length ?? 0,
                 itemHeight: MediaQuery.of(context).size.height * 0.6,
                 itemWidth: double.infinity,
                 layout: SwiperLayout.STACK,
                 scrollDirection: Axis.vertical,
+                loop: true,
                 pagination: SwiperPagination(
                   alignment: Alignment.bottomRight,
                   margin: const EdgeInsets.only(top: 40, right: 20),
@@ -93,9 +175,11 @@ class UserProfileScreen extends StatelessWidget {
                     alignment: Alignment.bottomLeft,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                          image: NetworkImage(
-                            model.userImagesList[index],
-                          ),
+                          image: appUser.images?[index] != null
+                              ? NetworkImage(
+                                  appUser.images![index]!,
+                                )
+                              : AssetImage(AppAssets().pic),
                           fit: BoxFit.cover),
                     ),
                     child: Column(
@@ -125,24 +209,33 @@ class UserProfileScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        'Mary Burgess',
+                        appUser.userName ?? '',
                         style: style25B.copyWith(color: headingColor),
                       ),
                       8.horizontalSpace,
                       Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 5.w,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                               colors: [lightPinkColor, lightOrangeColor]),
                           borderRadius: BorderRadius.circular(60.r),
                           //  color: Colors.orange,
                         ),
-                        height: 22.h,
-                        width: 50.w,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            Icon(Icons.female),
-                            Text('23'),
+                            Icon(
+                              appUser.gender == "Male"
+                                  ? Icons.male
+                                  : Icons.female,
+                              color: whiteColor,
+                            ),
+                            Text(
+                              '${DateTime.now().year - appUser.dob!.year}',
+                              style: style16.copyWith(color: whiteColor),
+                            ),
                           ],
                         ),
                       ),
@@ -171,13 +264,7 @@ class UserProfileScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Text(
-                    'Seattle, ',
-                    style: style16.copyWith(
-                        color: lightGreyColor, fontSize: 15.sp),
-                  ),
-                  8.horizontalSpace,
-                  Text(
-                    ' USA ',
+                    appUser.address ?? 'No Address',
                     style: style16.copyWith(
                         color: lightGreyColor, fontSize: 15.sp),
                   ),
@@ -210,7 +297,7 @@ class UserProfileScreen extends StatelessWidget {
           ),
           10.verticalSpace,
           Text(
-            'I am a very simple person with a very simple life. I love to travel and explore new places. I am a very simple person with a very simple life. I love to travel and explore new places.',
+            appUser.about ?? '',
             style: style16.copyWith(color: subHeadingColor, fontSize: 15),
           ),
           10.verticalSpace,
@@ -277,7 +364,7 @@ class UserProfileScreen extends StatelessWidget {
                 style: style16N.copyWith(color: subHeadingColor),
               ),
               Text(
-                '160cm',
+                '${appUser.height}cm',
                 style: style16N.copyWith(color: subheadingColor2),
               ),
             ],
@@ -290,7 +377,7 @@ class UserProfileScreen extends StatelessWidget {
                 style: style16N.copyWith(color: subHeadingColor),
               ),
               Text(
-                '65Kg',
+                '${appUser.weight}kg',
                 style: style16N.copyWith(color: subheadingColor2),
               ),
             ],
@@ -303,7 +390,7 @@ class UserProfileScreen extends StatelessWidget {
                 style: style16N.copyWith(color: subHeadingColor),
               ),
               Text(
-                'single',
+                appUser.relationshipStatus ?? '',
                 style: style16N.copyWith(color: subheadingColor2),
               ),
             ],
@@ -316,7 +403,7 @@ class UserProfileScreen extends StatelessWidget {
                 style: style16N.copyWith(color: subHeadingColor),
               ),
               Text(
-                'Feb 25,2025 ',
+                DateFormat('MMM dd, yyyy').format(appUser.createdAt!),
                 style: style16N.copyWith(color: subheadingColor2),
               ),
             ],
@@ -349,11 +436,11 @@ class UserProfileScreen extends StatelessWidget {
             runSpacing: 15.0,
             spacing: 18.0,
             children: List.generate(
-              6,
+              appUser.interests!.length,
               (index) {
                 return CustomInterestingWidget(
                     userProfileModel: UserProfileInterestingItemModel(
-                        title: model.interestingItemList[index]));
+                        title: appUser.interests![index]));
               },
             ),
           )
@@ -398,11 +485,11 @@ class UserProfileScreen extends StatelessWidget {
             runSpacing: 15.0,
             spacing: 18.0,
             children: List.generate(
-              model.lookingForItemList.length,
+              appUser.lookingFor!.length,
               (index) {
                 return CustomLookkingForWidget(
                     userProfileLookingForModel: UserProfileLookingForMOdel(
-                        title: model.lookingForItemList[index]));
+                        title: appUser.lookingFor![index]));
               },
             ),
           )

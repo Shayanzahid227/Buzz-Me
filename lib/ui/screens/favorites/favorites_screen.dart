@@ -1,8 +1,11 @@
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
+import 'package:code_structure/core/providers/all_users_provider.dart';
+import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/nearby_all_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class FavoritesScreen extends StatefulWidget {
   @override
@@ -20,38 +23,62 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Favorites'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15.0),
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildDropdownContent(),
-            Divider(),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    return Consumer2<AllUsersProvider, UserProvider>(
+        builder: (context, allUsersProvider, userProvider, child) {
+      var likes = allUsersProvider.users.where(
+        (element) => userProvider.user.liked!.contains(element.uid),
+      );
+      var visits = allUsersProvider.users.where(
+        (element) => userProvider.user.visited!.contains(element.uid),
+      );
+
+      var superLikes = allUsersProvider.users.where(
+        (element) => userProvider.user.superLiked!.contains(element.uid),
+      );
+
+      var matches = allUsersProvider.users.where(
+        (element) => userProvider.user.matched!.contains(element.uid),
+      );
+
+      var allConnection = [];
+      allConnection.addAll(likes);
+      allConnection.addAll(superLikes);
+      allConnection.addAll(visits);
+      allConnection.addAll(matches);
+
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Favorites'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildDropdownContent(),
+              Divider(),
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
-                    childAspectRatio: 2),
-                itemCount: 20,
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    height: 200,
-                    color: lightOrangeColor,
-                  );
-                },
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: allConnection.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return CustomNearbyAllUserWidget(
+                      appUser: allConnection[index],
+                    );
+                  },
+                ),
               ),
-            ),
-            // ... (rest of your content)
-          ],
+              // ... (rest of your content)
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   ///

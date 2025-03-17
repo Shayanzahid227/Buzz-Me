@@ -1,9 +1,12 @@
 import 'dart:ui';
 
 import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/model/discover_model.dart';
 import 'package:code_structure/core/others/base_view_model.dart';
+import 'package:code_structure/core/providers/all_users_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:swipe_cards/swipe_cards.dart';
 
 class DiscoverSCreenViewModel extends BaseViewModel {
@@ -63,12 +66,13 @@ class DiscoverSCreenViewModel extends BaseViewModel {
   List<SwipeItem> _swipeItems = [];
   MatchEngine? matchEngine;
 
-  DiscoverSCreenViewModel() {
-    _initializeCards();
+  DiscoverSCreenViewModel(List<AppUser> users) {
+    _initializeCards(users);
   }
 
-  void _initializeCards() {
-    _swipeItems = discoverList.map((discover) {
+  void _initializeCards(List<AppUser> users) {
+    print('users: $users');
+    _swipeItems = users.map((discover) {
       return SwipeItem(
         content: discover,
         likeAction: () {
@@ -87,8 +91,8 @@ class DiscoverSCreenViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void resetCards() {
-    _initializeCards();
+  void resetCards(List<AppUser> users) {
+    _initializeCards(users);
     notifyListeners();
   }
 }

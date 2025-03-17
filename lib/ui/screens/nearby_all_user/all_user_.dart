@@ -1,6 +1,7 @@
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/providers/all_users_provider.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/nearby_all_user.dart';
 
 import 'package:code_structure/ui/screens/filter/filter_screen.dart';
@@ -21,8 +22,8 @@ class NearbyAllUserScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => NearbyAllUsersViewModel(),
-      child: Consumer<NearbyAllUsersViewModel>(
-        builder: (context, model, child) => DefaultTabController(
+      child: Consumer2<NearbyAllUsersViewModel, AllUsersProvider>(
+        builder: (context, model, usersProvider, child) => DefaultTabController(
           length: 4,
           child: Scaffold(
             body: Column(
@@ -75,10 +76,10 @@ class NearbyAllUserScreen extends StatelessWidget {
                 Expanded(
                   child: TabBarView(
                     children: [
-                      _allUsers(context, model),
-                      _allUsers(context, model),
-                      _allUsers(context, model),
-                      _allUsers(context, model)
+                      _allUsers(context, model, usersProvider),
+                      _allUsers(context, model, usersProvider),
+                      _allUsers(context, model, usersProvider),
+                      _allUsers(context, model, usersProvider),
                     ],
                   ),
                 )
@@ -91,7 +92,11 @@ class NearbyAllUserScreen extends StatelessWidget {
     );
   }
 
-  SizedBox _allUsers(BuildContext context, NearbyAllUsersViewModel model) {
+  SizedBox _allUsers(
+    BuildContext context,
+    NearbyAllUsersViewModel model,
+    AllUsersProvider usersProvider,
+  ) {
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.99,
@@ -100,12 +105,12 @@ class NearbyAllUserScreen extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 10,
         ),
-        itemCount: model.allUsersList.length,
+        itemCount: usersProvider.users.length,
         itemBuilder: (BuildContext context, int index) {
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 5),
             child: CustomNearbyAllUserWidget(
-              nearbyAllUser: model.allUsersList[index],
+              appUser: usersProvider.users[index],
             ),
           );
         },

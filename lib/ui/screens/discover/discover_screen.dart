@@ -146,6 +146,7 @@
 import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
+import 'package:code_structure/core/providers/all_users_provider.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/discover_screen.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/header.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen_view_model.dart';
@@ -159,40 +160,43 @@ class DiscoverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => DiscoverSCreenViewModel(),
-      child: Consumer<DiscoverSCreenViewModel>(
-        builder: (context, model, child) => Scaffold(
-          body: Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(AppAssets().discoverBack),
-                fit: BoxFit.cover,
+    return Consumer<AllUsersProvider>(builder: (context, usersProvider, child) {
+      return ChangeNotifierProvider(
+        create: (context) => DiscoverSCreenViewModel(usersProvider.users),
+        child: Consumer<DiscoverSCreenViewModel>(
+          builder: (context, model, child) => Scaffold(
+            body: Container(
+              height: double.infinity,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(AppAssets().discoverBack),
+                  fit: BoxFit.cover,
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  20.h.verticalSpace,
-                  customHeader(
-                    heading: 'Discover',
-                    headingColor: whiteColor,
-                    image: AppAssets().fbIcon,
-                  ),
-                  20.verticalSpace,
-                  _allUsers(context, model),
-                ],
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    20.h.verticalSpace,
+                    customHeader(
+                      heading: 'Discover',
+                      headingColor: whiteColor,
+                      image: AppAssets().fbIcon,
+                    ),
+                    20.verticalSpace,
+                    _allUsers(context, model, usersProvider),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  _allUsers(BuildContext context, DiscoverSCreenViewModel model) {
+  _allUsers(BuildContext context, DiscoverSCreenViewModel model,
+      AllUsersProvider usersProvider) {
     // return Padding(
     //   padding: const EdgeInsets.symmetric(horizontal: 15.0),
     //   child: Container(
@@ -261,12 +265,12 @@ class DiscoverScreen extends StatelessWidget {
                                     Colors.grey.withOpacity(0.14),
                                     BlendMode.multiply),
                         child: CustomDiscoverWIdget(
-                            discoverModel: model.discoverList[index]),
+                            appUser: usersProvider.users[index]),
                       );
                     },
                     onStackFinished: () {
                       // Handle when all cards are swiped
-                      model.resetCards();
+                      model.resetCards(usersProvider.users);
                     },
                     itemChanged: (SwipeItem item, int index) {
                       // Handle item change if needed

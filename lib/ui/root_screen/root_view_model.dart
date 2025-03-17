@@ -3,6 +3,7 @@ import 'package:code_structure/core/others/base_view_model.dart';
 import 'package:code_structure/ui/screens/Inbox/inbox_screen.dart';
 import 'package:code_structure/ui/screens/chat/chat_screen.dart';
 import 'package:code_structure/ui/screens/discover/discover_screen.dart';
+import 'package:code_structure/ui/screens/favorites/favorites_screen.dart';
 
 import 'package:code_structure/ui/screens/my_profile/my_profile_screen.dart';
 import 'package:code_structure/ui/screens/nearby_all_user/all_user_.dart';
@@ -20,7 +21,7 @@ class RootViewModel extends BaseViewModel {
     DiscoverScreen(),
     NearbyAllUserScreen(),
 
-    UserProfileScreen(),
+    FavoritesScreen(),
     InboxScreen(),
     MyProfileScreen()
   ];
