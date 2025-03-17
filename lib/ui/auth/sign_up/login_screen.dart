@@ -24,7 +24,7 @@ class _LogInScreenState extends State<LogInScreen> {
 
   @override
   void initState() {
-    init();
+    // init();
     super.initState();
   }
 
@@ -66,14 +66,30 @@ class _LogInScreenState extends State<LogInScreen> {
                     icon: AppAssets().fbIcon,
                     text: "Connect with Facebook",
                     color: Color(0xFF4267B2),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final result = await viewModel.signInWithFacebook();
+                      if (result != null) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => RootScreen()),
+                        );
+                      }
+                    },
                   ),
                   20.verticalSpace,
                   SocialLoginButton(
                     icon: AppAssets().googleIcon,
                     text: "Connect with Google",
                     color: Color(0xFFDB4437),
-                    onPressed: () {},
+                    onPressed: () async {
+                      final result = await viewModel.signInWithGoogle();
+                      if (result != null) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => RootScreen()),
+                        );
+                      }
+                    },
                   ),
                   50.verticalSpace,
                   Text(
