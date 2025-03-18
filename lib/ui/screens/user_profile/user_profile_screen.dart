@@ -4,19 +4,26 @@ import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/model/user_profile.dart';
+import 'package:code_structure/core/services/chat_services.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for.dart';
+import 'package:code_structure/ui/screens/chat/chat_screen.dart';
 
 import 'package:code_structure/ui/screens/user_profile/user_profile_view_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class UserProfileScreen extends StatelessWidget {
+  final ChatService _chatService = ChatService();
+
+  final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
   final AppUser appUser;
-  const UserProfileScreen({
+  UserProfileScreen({
     required this.appUser,
     super.key,
   });
@@ -102,22 +109,42 @@ class UserProfileScreen extends StatelessWidget {
                   ),
                 ),
                 20.horizontalSpace,
-                Container(
-                  padding: EdgeInsets.all(20.w),
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          spreadRadius: 0,
-                          blurRadius: 10,
-                          offset: Offset(0, 2), // changes position of shadow
-                        )
-                      ]),
-                  child: Icon(
-                    Icons.message,
-                    color: Colors.blue,
+                GestureDetector(
+                  onTap: () async {
+                    final chatId = await _chatService.createOrGetChat(
+                      [currentUserId, appUser.uid!],
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          chatId: chatId,
+                          currentUserId: currentUserId,
+                          otherUserId: appUser.uid!,
+                          isGroup: false,
+                          title: appUser.userName ?? '',
+                          imageUrl: appUser.images![0],
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(20.w),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            spreadRadius: 0,
+                            blurRadius: 10,
+                            offset: Offset(0, 2), // changes position of shadow
+                          )
+                        ]),
+                    child: Icon(
+                      Icons.message,
+                      color: Colors.blue,
+                    ),
                   ),
                 ),
               ],

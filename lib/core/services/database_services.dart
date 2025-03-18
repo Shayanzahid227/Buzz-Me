@@ -25,9 +25,9 @@ class DatabaseServices {
     }
   }
 
-  Future<Stream<AppUser?>> userStream(String uid) async {
+  Stream<AppUser?> userStream(String uid) {
     try {
-      return await _firestore
+      return _firestore
           .collection(AppUserCollection)
           .doc(uid)
           .snapshots()
@@ -40,12 +40,9 @@ class DatabaseServices {
     }
   }
 
-  Future<Stream<List<AppUser>?>> allUsersStream(String uid) async {
+  Stream<List<AppUser>?> allUsersStream(String uid) {
     try {
-      return await _firestore
-          .collection(AppUserCollection)
-          .snapshots()
-          .map((event) {
+      return _firestore.collection(AppUserCollection).snapshots().map((event) {
         print('adfadf ${event.docs.length}');
         final List<AppUser> users = event.docs
             .map((e) => AppUser.fromJson(e.data() as Map<String, dynamic>))
@@ -139,6 +136,17 @@ class DatabaseServices {
       );
     } catch (e) {
       print(e.toString());
+    }
+  }
+
+  Future<void> updateUserOnlineStatus(String uid, bool isOnline) async {
+    try {
+      await _firestore.collection(AppUserCollection).doc(uid).update({
+        'isOnline': isOnline,
+        'lastOnline': DateTime.now(),
+      });
+    } catch (e) {
+      print('Error updating online status: ${e.toString()}');
     }
   }
 }
