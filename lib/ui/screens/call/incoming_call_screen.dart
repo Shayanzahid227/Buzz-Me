@@ -1,18 +1,47 @@
-import 'package:code_structure/ui/screens/call/audio_call_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/models/call.dart';
+import 'package:code_structure/core/services/call_service.dart';
+import 'package:code_structure/ui/screens/call/audio_call_screen.dart';
+import 'package:code_structure/ui/screens/call/video_call_screen.dart';
+import 'package:provider/provider.dart';
 
 class IncomingCallScreen extends StatelessWidget {
-  final String userName;
-  final String profileImage;
+  final Call call;
 
   const IncomingCallScreen({
     super.key,
-    required this.userName,
-    required this.profileImage,
+    required this.call,
   });
+
+  void _handleAcceptCall(BuildContext context) {
+    // Update call status to ongoing
+    // context.read<CallService>().endCurrentCall();
+
+    // Navigate to appropriate call screen
+    if (call.callType == 'video') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VideoCallScreen(call: call),
+        ),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AudioCallScreen(call: call),
+        ),
+      );
+    }
+  }
+
+  void _handleRejectCall(BuildContext context) {
+    // context.read<CallService>().rejectCurrentCall();
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +56,11 @@ class IncomingCallScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 100.r,
-                    backgroundImage: AssetImage(profileImage),
+                    backgroundImage: AssetImage(call.callerName),
                   ),
                   SizedBox(height: 24.h),
                   Text(
-                    userName,
+                    call.callerName,
                     style: style17.copyWith(
                       color: headingColor,
                       fontWeight: FontWeight.w600,
@@ -39,7 +68,7 @@ class IncomingCallScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    'Incoming call...',
+                    'Incoming ${call.callType} call...',
                     style: style14.copyWith(
                       color: subheadingColor2,
                     ),
@@ -55,22 +84,12 @@ class IncomingCallScreen extends StatelessWidget {
                   _buildCallButton(
                     icon: Icons.call_end,
                     color: SecondarybuttonColor,
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => _handleRejectCall(context),
                   ),
                   _buildCallButton(
                     icon: Icons.call,
                     color: PrimarybuttonColor,
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AudioCallScreen(
-                            userName: userName,
-                            profileImage: profileImage,
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => _handleAcceptCall(context),
                   ),
                 ],
               ),

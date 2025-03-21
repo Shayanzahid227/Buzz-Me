@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:code_structure/core/model/call_minutes.dart';
 
 class AppUser {
   String? uid;
@@ -32,6 +33,11 @@ class AppUser {
   List<String>? matched;
   List<String>? visited;
 
+  String? fcmToken;
+
+  // Added callMinutes field
+  CallMinutes? callMinutes;
+
   AppUser({
     this.uid,
     this.userName,
@@ -64,6 +70,8 @@ class AppUser {
     this.superLiked,
     this.matched,
     this.visited,
+    this.fcmToken,
+    this.callMinutes,
   });
 
   AppUser copyWith({
@@ -91,6 +99,8 @@ class AppUser {
     List<String>? superLiked,
     List<String>? matched,
     List<String>? visited,
+    String? fcmToken,
+    CallMinutes? callMinutes,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -117,6 +127,8 @@ class AppUser {
       superLiked: superLiked ?? this.superLiked,
       matched: matched ?? this.matched,
       visited: visited ?? this.visited,
+      fcmToken: fcmToken ?? this.fcmToken,
+      callMinutes: callMinutes ?? this.callMinutes,
     );
   }
 
@@ -148,6 +160,8 @@ class AppUser {
       'superLiked': superLiked ?? [],
       'matched': matched ?? [],
       'visited': visited ?? [],
+      'fcmToken': fcmToken ?? '',
+      'callMinutes': callMinutes?.toMap() ?? CallMinutes().toMap(),
     };
   }
 
@@ -157,7 +171,7 @@ class AppUser {
       userName: json['userName'],
       images: List<String?>.from(json['images']),
       createdAt: (json['createdAt'] as Timestamp).toDate(),
-      dob: (json['dob'] as Timestamp).toDate(),
+      dob: json['dob'] != null ? (json['dob'] as Timestamp).toDate() : null,
       gender: json['gender'],
       height: json['height'],
       weight: json['weight'],
@@ -167,16 +181,18 @@ class AppUser {
       lastOnline: (json['lastOnline'] as Timestamp).toDate(),
       // location: json['location'],
       address: json['address'],
-      interests: List<String>.from(json['interests']),
-      lookingFor: List<String>.from(json['lookingFor']),
-      likes: List<String>.from(json['likes']),
-      superLikes: List<String>.from(json['superLikes']),
-      matches: List<String>.from(json['matches']),
-      visits: List<String>.from(json['visits']),
-      liked: List<String>.from(json['liked']),
-      superLiked: List<String>.from(json['superLiked']),
-      matched: List<String>.from(json['matched']),
-      visited: List<String>.from(json['visited']),
+      interests: List<String>.from(json['interests'] ?? []),
+      lookingFor: List<String>.from(json['lookingFor'] ?? []),
+      likes: List<String>.from(json['likes'] ?? []),
+      superLikes: List<String>.from(json['superLikes'] ?? []),
+      matches: List<String>.from(json['matches'] ?? []),
+      visits: List<String>.from(json['visits'] ?? []),
+      liked: List<String>.from(json['liked'] ?? []),
+      superLiked: List<String>.from(json['superLiked'] ?? []),
+      matched: List<String>.from(json['matched'] ?? []),
+      visited: List<String>.from(json['visited'] ?? []),
+      fcmToken: json['fcmToken'],
+      callMinutes: CallMinutes.fromMap(json['callMinutes']),
     );
   }
 }

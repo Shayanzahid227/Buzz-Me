@@ -10,7 +10,6 @@ class Story {
   final DateTime createdAt;
   final DateTime expiresAt;
   final List<String> viewedBy;
-  final int viewCount;
   final int commentCount;
   final String? caption;
 
@@ -22,7 +21,6 @@ class Story {
     required this.createdAt,
     required this.expiresAt,
     this.viewedBy = const [],
-    this.viewCount = 0,
     this.commentCount = 0,
     this.caption,
   });
@@ -36,7 +34,6 @@ class Story {
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': Timestamp.fromDate(expiresAt),
       'viewedBy': viewedBy,
-      'viewCount': viewCount,
       'commentCount': commentCount,
       'caption': caption,
     };
@@ -54,7 +51,6 @@ class Story {
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       expiresAt: (json['expiresAt'] as Timestamp).toDate(),
       viewedBy: List<String>.from(json['viewedBy'] ?? []),
-      viewCount: json['viewCount'] ?? 0,
       commentCount: json['commentCount'] ?? 0,
       caption: json['caption'],
     );

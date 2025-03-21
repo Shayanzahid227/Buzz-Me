@@ -1,17 +1,15 @@
 import 'package:code_structure/core/providers/all_users_provider.dart';
+import 'package:code_structure/core/providers/call_minutes_provider.dart';
 import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/firebase_options.dart';
-import 'package:code_structure/ui/auth/sign_up/login_screen.dart';
-import 'package:code_structure/ui/root_screen/root_screen.dart';
-import 'package:code_structure/ui/screens/discover/discover_screen.dart';
-import 'package:code_structure/ui/screens/favorites/favorites_screen.dart';
-import 'package:code_structure/ui/screens/filter/filter_screen.dart';
 import 'package:code_structure/ui/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:code_structure/core/services/online_status_service.dart';
+import 'package:code_structure/core/services/call_service.dart';
+import 'package:code_structure/core/services/stripe_service.dart';
 
 // class RouteGenerator {
 //   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -24,11 +22,19 @@ import 'package:code_structure/core/services/online_status_service.dart';
 //   }
 // }
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Stripe
+  await StripeService.initialize();
+
   runApp(const MyApp());
 }
 
@@ -41,11 +47,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final OnlineStatusService _onlineStatusService = OnlineStatusService();
+  // late CallService _callService;
 
   @override
   void initState() {
     super.initState();
     _onlineStatusService.initialize();
+    // _callService = CallService(navigatorKey: navigatorKey);
   }
 
   @override
@@ -71,12 +79,17 @@ class _MyAppState extends State<MyApp> {
             create: (context) => UserProvider(),
             lazy: false,
           ),
+          ChangeNotifierProvider(
+            create: (context) => CallMinutesProvider()..initialize(),
+            lazy: false,
+          ),
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             scaffoldBackgroundColor: const Color(0xffFAF8F6),
           ),
+          navigatorKey: navigatorKey,
           // initialRoute: '/',
           // onGenerateRoute: RouteGenerator.generateRoute,
           home: const SplashScreen(),

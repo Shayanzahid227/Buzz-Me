@@ -7,10 +7,24 @@ class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final uuid = const Uuid();
 
-  Future<String> uploadFile(File file, String chatId) async {
+  Future<String> uploadChatFile(File file, String chatId) async {
     try {
       final String fileName = '${uuid.v4()}${path.extension(file.path)}';
       final Reference ref = _storage.ref().child('chats/$chatId/$fileName');
+      final UploadTask uploadTask = ref.putFile(file);
+      final TaskSnapshot taskSnapshot = await uploadTask;
+      final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading file: $e');
+      throw Exception('Failed to upload file');
+    }
+  }
+
+  Future<String> uploadProfileImage(File file, String userId) async {
+    try {
+      final String fileName = '${uuid.v4()}${path.extension(file.path)}';
+      final Reference ref = _storage.ref().child('profiles/$userId/$fileName');
       final UploadTask uploadTask = ref.putFile(file);
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();

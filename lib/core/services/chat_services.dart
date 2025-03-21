@@ -65,6 +65,7 @@ class ChatService {
       // Update last message in chat
       await _firestore.collection('chats').doc(chatId).update({
         'lastMessage': message.content,
+        'lastMessageType': message.type.toString(),
         'lastMessageTime': message.timestamp,
         'lastMessageSenderId': message.senderId,
       });

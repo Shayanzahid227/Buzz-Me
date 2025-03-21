@@ -1,19 +1,21 @@
-import 'package:code_structure/core/constants/app_assest.dart';
-import 'package:code_structure/core/constants/colors.dart';
-import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/services/agora_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/core/constants/colors.dart';
+import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/models/call.dart';
+import 'package:code_structure/core/services/call_service.dart';
+import 'package:provider/provider.dart';
 
 class AudioCallScreen extends StatefulWidget {
-  final String userName;
-  final String profileImage;
+  final Call call;
 
   const AudioCallScreen({
     super.key,
-    required this.userName,
-    required this.profileImage,
+    required this.call,
   });
 
   @override
@@ -24,14 +26,6 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
   RtcEngine? engine;
   bool isMuted = false;
   bool isSpeakerOn = false;
-
-  // Replace with your Agora App ID
-  final String appId = "3c7b549ae83a4ac98b285578e3648f80";
-  // Replace with your channel name
-  final String channelName = "buzzme";
-  // Replace with your temp token from Agora Console
-  final String token =
-      "007eJxTYHjbvGZX4fezuee/TO2MNdgo7rQ0tX2L493YLK6/THWdccsVGIyTzZNMTSwTUy2ME00Sky0tkowsTE3NLVKNzUws0iwMVu67nN4QyMiQ76LIyMgAgSA+G0NSaVVVbioDAwArCCGq";
 
   @override
   void initState() {
@@ -46,7 +40,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     // Create RTC engine instance
     engine = createAgoraRtcEngine();
     await engine!.initialize(RtcEngineContext(
-      appId: appId,
+      appId: AgoraService.appId,
     ));
 
     // Set event handlers
@@ -59,19 +53,40 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
       },
       onUserOffline: (connection, remoteUid, reason) {
         debugPrint("Remote user left: $remoteUid");
+        // End call if remote user left
+        _handleCallEnd();
       },
     ));
 
     // Join the channel
     await engine!.joinChannel(
-      token: token,
-      channelId: channelName,
+      token: widget.call.token,
+      channelId: widget.call.channelName,
       uid: 0,
       options: const ChannelMediaOptions(
         clientRoleType: ClientRoleType.clientRoleBroadcaster,
         channelProfile: ChannelProfileType.channelProfileCommunication,
       ),
     );
+  }
+
+  void _handleCallEnd() {
+    // context.read<CallService>().endCurrentCall();
+    Navigator.pop(context);
+  }
+
+  void _toggleMute() {
+    setState(() {
+      isMuted = !isMuted;
+      engine?.muteLocalAudioStream(isMuted);
+    });
+  }
+
+  void _toggleSpeaker() {
+    setState(() {
+      isSpeakerOn = !isSpeakerOn;
+      engine?.setEnableSpeakerphone(isSpeakerOn);
+    });
   }
 
   @override
@@ -86,14 +101,14 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         title: Column(
           children: [
             Text(
-              widget.userName,
+              widget.call.receiverName,
               style: style17.copyWith(
                 color: headingColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
-              'Calling...',
+              'Ongoing call',
               style: style14.copyWith(
                 color: subheadingColor2,
               ),
@@ -110,7 +125,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                 children: [
                   CircleAvatar(
                     radius: 100.r,
-                    backgroundImage: AssetImage(widget.profileImage),
+                    backgroundImage: AssetImage(widget.call.receiverName),
                   ),
                   SizedBox(height: 40.h),
                 ],
@@ -126,17 +141,17 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                   _buildCallControlButton(
                     icon: isMuted ? Icons.mic : Icons.mic_off,
                     color: PrimarybuttonColor,
-                    onPressed: () => toggleMute(),
+                    onPressed: _toggleMute,
                   ),
                   _buildCallControlButton(
                     icon: isSpeakerOn ? Icons.volume_up : Icons.volume_down,
                     color: PrimarybuttonColor,
-                    onPressed: () => toggleSpeaker(),
+                    onPressed: _toggleSpeaker,
                   ),
                   _buildCallControlButton(
                     icon: Icons.call_end,
                     color: SecondarybuttonColor,
-                    onPressed: () => endCall(),
+                    onPressed: _handleCallEnd,
                   ),
                 ],
               ),
@@ -162,7 +177,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
           BoxShadow(
             color: color.withOpacity(0.3),
             blurRadius: 8,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -175,22 +190,6 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         ),
       ),
     );
-  }
-
-  void toggleMute() async {
-    await engine?.muteLocalAudioStream(!isMuted);
-    setState(() => isMuted = !isMuted);
-  }
-
-  void toggleSpeaker() async {
-    await engine?.setEnableSpeakerphone(!isSpeakerOn);
-    setState(() => isSpeakerOn = !isSpeakerOn);
-  }
-
-  void endCall() async {
-    await engine?.leaveChannel();
-    await engine?.release();
-    Navigator.pop(context);
   }
 
   @override

@@ -8,6 +8,9 @@ import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:code_structure/core/services/cache_manager.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
 class StoryViewerScreen extends StatefulWidget {
   final List<Story> stories;
@@ -32,9 +35,12 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   VideoPlayerController? _videoController;
   final StoryService _storyService = StoryService();
   final DatabaseServices _databaseServices = DatabaseServices();
+  final CacheManager _cacheManager = CacheManager();
   int _currentIndex = 0;
   bool _isCommenting = false;
+  bool _isLoading = true;
   final TextEditingController _commentController = TextEditingController();
+  String? _cachedMediaPath;
 
   @override
   void initState() {
@@ -62,25 +68,77 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     super.dispose();
   }
 
-  Future<void> _loadStory(Story story) async {
-    _progressController.reset();
-
-    if (story.type == StoryType.video) {
-      _videoController?.dispose();
-      _videoController = VideoPlayerController.network(story.mediaUrl)
-        ..initialize().then((_) {
-          setState(() {});
-          _videoController!.play();
-          _progressController.duration = _videoController!.value.duration;
-          _progressController.forward();
-        });
-    } else {
-      _progressController.forward();
+  String _getFileExtension(String url) {
+    // Try to extract extension from URL
+    final uri = Uri.parse(url);
+    final pathSegments = uri.pathSegments;
+    if (pathSegments.isNotEmpty) {
+      final fileName = pathSegments.last;
+      final extension = path.extension(fileName);
+      if (extension.isNotEmpty) {
+        return extension.substring(1); // Remove the dot
+      }
     }
 
-    // Mark story as viewed
-    if (!story.viewedBy.contains(widget.currentUserId)) {
-      await _storyService.viewStory(story.id, widget.currentUserId);
+    // Default based on story type
+    return 'mp4';
+  }
+
+  Future<void> _loadStory(Story story) async {
+    setState(() {
+      _isLoading = true;
+      _cachedMediaPath = null;
+    });
+
+    _progressController.reset();
+
+    try {
+      // Check if media is cached
+      final extension = _getFileExtension(story.mediaUrl);
+      final cachedFile =
+          await _cacheManager.getCachedFile(story.mediaUrl, extension);
+
+      if (story.type == StoryType.video) {
+        _videoController?.dispose();
+
+        if (cachedFile != null) {
+          // Use cached video file
+          _cachedMediaPath = cachedFile.path;
+          _videoController = VideoPlayerController.file(cachedFile);
+        } else {
+          // Use network video
+          _videoController = VideoPlayerController.network(story.mediaUrl);
+        }
+
+        await _videoController!.initialize();
+        setState(() {
+          _isLoading = false;
+        });
+        _videoController!.play();
+        _progressController.duration = _videoController!.value.duration;
+        _progressController.forward();
+      } else {
+        // For images
+        if (cachedFile != null) {
+          _cachedMediaPath = cachedFile.path;
+        }
+        setState(() {
+          _isLoading = false;
+        });
+        _progressController.forward();
+      }
+
+      // Mark story as viewed
+      if (!story.viewedBy.contains(widget.currentUserId)) {
+        await _storyService.viewStory(story.id, widget.currentUserId);
+      }
+    } catch (e) {
+      print('Error loading story: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      _progressController
+          .forward(); // Continue with the timer even if there's an error
     }
   }
 
@@ -115,6 +173,18 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
             _previousStory();
           } else if (details.globalPosition.dx > 2 * screenWidth / 3) {
             _nextStory();
+          } else {
+            // Pause/play video if it's a video story
+            if (widget.stories[_currentIndex].type == StoryType.video &&
+                _videoController != null) {
+              if (_videoController!.value.isPlaying) {
+                _videoController!.pause();
+                _progressController.stop();
+              } else {
+                _videoController!.play();
+                _progressController.forward();
+              }
+            }
           }
         },
         child: Stack(
@@ -134,6 +204,8 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
                   story: story,
                   videoController:
                       story.type == StoryType.video ? _videoController : null,
+                  cachedMediaPath: _cachedMediaPath,
+                  isLoading: _isLoading,
                 );
               },
             ),
@@ -287,15 +359,27 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 class _StoryContent extends StatelessWidget {
   final Story story;
   final VideoPlayerController? videoController;
+  final String? cachedMediaPath;
+  final bool isLoading;
 
   const _StoryContent({
     Key? key,
     required this.story,
     this.videoController,
+    this.cachedMediaPath,
+    required this.isLoading,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      );
+    }
+
     if (story.type == StoryType.video && videoController != null) {
       return Center(
         child: AspectRatio(
@@ -304,16 +388,43 @@ class _StoryContent extends StatelessWidget {
         ),
       );
     } else {
-      return Center(
-        child: Image.network(
-          story.mediaUrl,
-          fit: BoxFit.contain,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(child: CircularProgressIndicator());
-          },
-        ),
-      );
+      if (cachedMediaPath != null) {
+        return Center(
+          child: Image.file(
+            File(cachedMediaPath!),
+            fit: BoxFit.contain,
+          ),
+        );
+      } else {
+        return Center(
+          child: Image.network(
+            story.mediaUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                  child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ));
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.white, size: 40),
+                    SizedBox(height: 8),
+                    Text(
+                      'Failed to load image',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      }
     }
   }
 }

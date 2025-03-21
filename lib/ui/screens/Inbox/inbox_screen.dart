@@ -15,6 +15,13 @@ import 'package:code_structure/core/model/story.dart';
 import 'package:code_structure/core/services/story_services.dart';
 import 'package:code_structure/ui/screens/stories/create_story_screen.dart';
 import 'package:code_structure/ui/screens/stories/story_viewer_screen.dart';
+import 'package:code_structure/core/services/cache_manager.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:get_thumbnail_video/index.dart';
+import 'package:get_thumbnail_video/video_thumbnail.dart';
 
 class InboxScreen extends StatefulWidget {
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
@@ -210,6 +217,7 @@ class _InboxScreenState extends State<InboxScreen>
               chatId: chatId,
               currentUserId: widget.currentUserId,
               otherUserId: user.uid!,
+              otherUserfcm: user.fcmToken,
               isGroup: false,
               title: user.userName ?? '',
               imageUrl: user.images![0],
@@ -271,6 +279,7 @@ class _InboxScreenState extends State<InboxScreen>
               chatId: chat.id,
               currentUserId: widget.currentUserId,
               otherUserId: otherUser.uid!,
+              otherUserfcm: otherUser.fcmToken,
               isGroup: false,
               title: otherUser.userName ?? '',
               imageUrl: otherUser.images![0],
@@ -573,7 +582,8 @@ class _InboxScreenState extends State<InboxScreen>
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
                     itemCount: myStories.length,
                     itemBuilder: (context, index) {
-                      return _buildStoryCard(myStories[index], isMyStory: true);
+                      return _buildStoryCard(myStories[index], myStories,
+                          isMyStory: true);
                     },
                   ),
                 ),
@@ -602,7 +612,7 @@ class _InboxScreenState extends State<InboxScreen>
                   ),
                   itemCount: otherStories.length,
                   itemBuilder: (context, index) {
-                    return _buildStoryCard(otherStories[index]);
+                    return _buildStoryCard(otherStories[index], otherStories);
                   },
                 ),
               ),
@@ -614,95 +624,14 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
-  Widget _buildStoryCard(Story story, {bool isMyStory = false}) {
-    return FutureBuilder<AppUser?>(
-      future: _databaseServices.getUser(story.userId),
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-
-        return GestureDetector(
-          onTap: () => _viewStory(story),
-          child: Container(
-            margin: EdgeInsets.only(right: isMyStory ? 12.w : 0),
-            width: isMyStory ? 140.w : double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12.r),
-              image: DecorationImage(
-                image: NetworkImage(story.mediaUrl),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.r),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
-                ),
-              ),
-              padding: EdgeInsets.all(12.w),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16.r,
-                        backgroundImage: user?.images?[0] != null
-                            ? NetworkImage(user!.images![0]!)
-                            : AssetImage(AppAssets().pic) as ImageProvider,
-                      ),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          user?.userName ?? 'Unknown',
-                          style: style14.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.remove_red_eye_outlined,
-                        size: 14.r,
-                        color: Colors.white70,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        '${story.viewCount}',
-                        style: style14.copyWith(color: Colors.white70),
-                      ),
-                      SizedBox(width: 12.w),
-                      Icon(
-                        Icons.chat_bubble_outline,
-                        size: 14.r,
-                        color: Colors.white70,
-                      ),
-                      SizedBox(width: 4.w),
-                      Text(
-                        '${story.commentCount}',
-                        style: style14.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+  Widget _buildStoryCard(Story story, List<Story> userStories,
+      {bool isMyStory = false}) {
+    return CachedStoryCard(
+      story: story,
+      isMyStory: isMyStory,
+      userId: widget.currentUserId,
+      onTap: () => _viewStory(story, userStories),
+      databaseServices: _databaseServices,
     );
   }
 
@@ -715,8 +644,9 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
-  void _viewStory(Story story) async {
-    final userStories = await _storyService.getStoriesForUser(story.userId);
+  void _viewStory(Story story, List<Story> userStories) async {
+    print(story.toJson());
+    print(userStories.indexOf(story));
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -825,5 +755,369 @@ class _InboxScreenState extends State<InboxScreen>
         ],
       ),
     );
+  }
+}
+
+class CachedStoryCard extends StatefulWidget {
+  final Story story;
+  final bool isMyStory;
+  final String userId;
+  final VoidCallback onTap;
+  final DatabaseServices databaseServices;
+
+  const CachedStoryCard({
+    Key? key,
+    required this.story,
+    required this.isMyStory,
+    required this.userId,
+    required this.onTap,
+    required this.databaseServices,
+  }) : super(key: key);
+
+  @override
+  State<CachedStoryCard> createState() => _CachedStoryCardState();
+}
+
+class _CachedStoryCardState extends State<CachedStoryCard> {
+  final CacheManager _cacheManager = CacheManager();
+  bool _isLoading = true;
+  String? _cachedMediaPath;
+  String? _thumbnailPath;
+  bool _hasError = false;
+  AppUser? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserAndMedia();
+  }
+
+  Future<void> _loadUserAndMedia() async {
+    try {
+      // Load user info
+      _user = await widget.databaseServices.getUser(widget.story.userId);
+
+      // Check if the media is cached
+      final fileExtension = _getFileExtension(widget.story.mediaUrl);
+      final cachedFile = await _cacheManager.getCachedFile(
+          widget.story.mediaUrl, fileExtension);
+
+      if (cachedFile != null) {
+        // Use cached file
+        setState(() {
+          _cachedMediaPath = cachedFile.path;
+          _isLoading = false;
+        });
+      } else {
+        // For videos, we need to get a thumbnail
+        if (widget.story.type == StoryType.video) {
+          await _generateThumbnail();
+        }
+
+        // Start downloading the file
+        _downloadAndCacheMedia();
+      }
+    } catch (e) {
+      print('Error loading media: $e');
+      setState(() {
+        _hasError = true;
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _getFileExtension(String url) {
+    // Try to extract extension from URL or default to jpg for images and mp4 for videos
+    final uri = Uri.parse(url);
+    final pathSegments = uri.pathSegments;
+    if (pathSegments.isNotEmpty) {
+      final fileName = pathSegments.last;
+      final extension = path.extension(fileName);
+      if (extension.isNotEmpty) {
+        return extension.substring(1); // Remove the dot
+      }
+    }
+
+    // Default extensions based on story type
+    return widget.story.type == StoryType.video ? 'mp4' : 'jpg';
+  }
+
+  Future<void> _generateThumbnail() async {
+    try {
+      // Check if we already have a cached thumbnail
+      final thumbnailFile = await _cacheManager.getCachedFile(
+          "${widget.story.mediaUrl}_thumbnail", "jpg");
+
+      if (thumbnailFile != null) {
+        // Use the cached thumbnail
+        setState(() {
+          _thumbnailPath = thumbnailFile.path;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Generate thumbnail from URL
+      final tempDir = await getTemporaryDirectory();
+      final thumbnailPath = await VideoThumbnail.thumbnailFile(
+        video: widget.story.mediaUrl,
+        thumbnailPath: tempDir.path,
+        imageFormat: ImageFormat.JPEG,
+        maxHeight: 300,
+        quality: 75,
+      );
+
+      if (thumbnailPath != null) {
+        // Cache the thumbnail
+        final thumbnailFile = File(thumbnailPath.path);
+        final cachedThumbnail = await _cacheManager.cacheFile(
+            "${widget.story.mediaUrl}_thumbnail", thumbnailFile, "jpg");
+
+        setState(() {
+          _thumbnailPath = cachedThumbnail.path;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error generating thumbnail: $e');
+      // Continue with loading, even if thumbnail generation fails
+    }
+  }
+
+  Future<void> _downloadAndCacheMedia() async {
+    try {
+      final dio = Dio();
+      final tempDir = await getTemporaryDirectory();
+      final fileExtension = _getFileExtension(widget.story.mediaUrl);
+      final tempFile = File('${tempDir.path}/temp_story.$fileExtension');
+
+      // Download the file
+      await dio.download(
+        widget.story.mediaUrl,
+        tempFile.path,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            // Can update progress if needed
+          }
+        },
+      );
+
+      // Cache the downloaded file
+      final cachedFile = await _cacheManager.cacheFile(
+          widget.story.mediaUrl, tempFile, fileExtension);
+
+      // Delete the temp file
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+
+      // Update UI with cached file
+      setState(() {
+        _cachedMediaPath = cachedFile.path;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error downloading media: $e');
+      setState(() {
+        _hasError = true;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        margin: EdgeInsets.only(right: widget.isMyStory ? 12.w : 0),
+        width: widget.isMyStory ? 140.w : double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          color: Colors.grey[300],
+        ),
+        child: Stack(
+          children: [
+            // Media content (image/video thumbnail)
+            if (_isLoading)
+              Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(lightPinkColor),
+                ),
+              )
+            else if (_hasError)
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 40.r),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'Error loading media',
+                      style: style14.copyWith(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            else
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: _buildMediaContent(),
+                ),
+              ),
+
+            // Gradient overlay
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12.r),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Video indicator if applicable
+            if (widget.story.type == StoryType.video && !_isLoading)
+              Positioned(
+                top: 12.h,
+                right: 12.w,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.videocam, color: Colors.white, size: 14.r),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Video',
+                        style: style14.copyWith(color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // User info and stats
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.all(12.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16.r,
+                          backgroundImage: _user?.images?[0] != null
+                              ? NetworkImage(_user!.images![0]!)
+                              : AssetImage(AppAssets().pic) as ImageProvider,
+                        ),
+                        SizedBox(width: 8.w),
+                        Expanded(
+                          child: Text(
+                            _user?.userName ?? 'Unknown',
+                            style: style14.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.remove_red_eye_outlined,
+                          size: 14.r,
+                          color: Colors.white70,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '${widget.story.viewedBy.length}',
+                          style: style14.copyWith(color: Colors.white70),
+                        ),
+                        SizedBox(width: 12.w),
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 14.r,
+                          color: Colors.white70,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '${widget.story.commentCount}',
+                          style: style14.copyWith(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaContent() {
+    if (_cachedMediaPath != null) {
+      return Image.file(
+        File(_cachedMediaPath!),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    } else if (_thumbnailPath != null) {
+      return Image.file(
+        File(_thumbnailPath!),
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    } else {
+      // Fallback to network image if both cached paths are null
+      return Image.network(
+        widget.story.mediaUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+              valueColor: AlwaysStoppedAnimation<Color>(lightPinkColor),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Center(
+            child: Icon(Icons.broken_image, color: Colors.white),
+          );
+        },
+      );
+    }
   }
 }

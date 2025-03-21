@@ -39,21 +39,12 @@ class UserProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _userProfile(model, context),
-                ListView(
-                  shrinkWrap:
-                      true, // Allows ListView to be inside SingleChildScrollView
-                  physics:
-                      NeverScrollableScrollPhysics(), // Prevent inner ListView scrolling
-                  children: [
-                    _about(),
-                    _friends(model, context),
-                    _basicProfile(model, context),
-                    _interesting(model, context),
-                    20.verticalSpace,
-                    _LookingFor(model, context),
-                    50.verticalSpace,
-                  ],
-                ),
+                _about(),
+                _basicProfile(model, context),
+                _interesting(model, context),
+                20.verticalSpace,
+                _LookingFor(model, context),
+                50.verticalSpace,
               ],
             ),
           ),
@@ -121,6 +112,7 @@ class UserProfileScreen extends StatelessWidget {
                           chatId: chatId,
                           currentUserId: currentUserId,
                           otherUserId: appUser.uid!,
+                          otherUserfcm: appUser.fcmToken,
                           isGroup: false,
                           title: appUser.userName ?? '',
                           imageUrl: appUser.images![0],
@@ -161,13 +153,14 @@ class UserProfileScreen extends StatelessWidget {
   /// profile with swiper images
   ///
   _userProfile(UserProfileViewModel model, BuildContext context) {
+    var images = appUser.images!.where((image) => image != null).toList();
     ScrollController _scrollController = ScrollController();
     int _currentIndex = 0;
 
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollNotification) {
         if (scrollNotification is ScrollEndNotification &&
-            _currentIndex == appUser.images!.length - 1) {
+            _currentIndex == images.length - 1) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
             duration: Duration(milliseconds: 1200),
@@ -183,7 +176,7 @@ class UserProfileScreen extends StatelessWidget {
             SizedBox(
               //height: MediaQuery.of(context).size.height * 0.7.h,
               child: Swiper(
-                itemCount: appUser.images?.length ?? 0,
+                itemCount: images.length,
                 itemHeight: MediaQuery.of(context).size.height * 0.6,
                 itemWidth: double.infinity,
                 layout: SwiperLayout.STACK,
@@ -202,9 +195,9 @@ class UserProfileScreen extends StatelessWidget {
                     alignment: Alignment.bottomLeft,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                          image: appUser.images?[index] != null
+                          image: images[index] != null
                               ? NetworkImage(
-                                  appUser.images![index]!,
+                                  images[index]!,
                                 )
                               : AssetImage(AppAssets().pic),
                           fit: BoxFit.cover),

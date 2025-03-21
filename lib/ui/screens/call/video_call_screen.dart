@@ -1,19 +1,21 @@
-import 'package:code_structure/core/constants/app_assest.dart';
-import 'package:code_structure/core/constants/colors.dart';
-import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/services/agora_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:code_structure/core/constants/app_assest.dart';
+import 'package:code_structure/core/constants/colors.dart';
+import 'package:code_structure/core/constants/text_style.dart';
+import 'package:code_structure/core/models/call.dart';
+import 'package:code_structure/core/services/call_service.dart';
+import 'package:provider/provider.dart';
 
 class VideoCallScreen extends StatefulWidget {
-  final String userName;
-  final String profileImage;
+  final Call call;
 
   const VideoCallScreen({
     super.key,
-    required this.userName,
-    required this.profileImage,
+    required this.call,
   });
 
   @override
@@ -28,14 +30,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   RtcEngine? _engine;
   int? _remoteUid;
   bool _localUserJoined = false;
-
-  // Replace with your Agora App ID
-  final String appId = "3c7b549ae83a4ac98b285578e3648f80";
-  // Replace with your channel name
-  final String channelName = "buzzme";
-  // Replace with your temp token from Agora Console
-  final String token =
-      "007eJxTYHjbvGZX4fezuee/TO2MNdgo7rQ0tX2L493YLK6/THWdccsVGIyTzZNMTSwTUy2ME00Sky0tkowsTE3NLVKNzUws0iwMVu67nN4QyMiQ76LIyMgAgSA+G0NSaVVVbioDAwArCCGq";
+  bool _isMuted = false;
+  bool _isCameraOff = false;
 
   @override
   void initState() {
@@ -50,7 +46,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     // Create RTC Engine
     _engine = createAgoraRtcEngine();
     await _engine!.initialize(RtcEngineContext(
-      appId: appId,
+      appId: AgoraService.appId,
       channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
     ));
 
@@ -71,6 +67,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           setState(() {
             _remoteUid = null;
           });
+          // End call if remote user left
+          _handleCallEnd();
         },
       ),
     );
@@ -79,11 +77,34 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     await _engine!.startPreview();
     await _engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
     await _engine!.joinChannel(
-      token: token,
-      channelId: channelName,
+      token: widget.call.token,
+      channelId: widget.call.channelName,
       uid: 0,
       options: const ChannelMediaOptions(),
     );
+  }
+
+  void _handleCallEnd() {
+    // context.read<CallService>().endCurrentCall();
+    Navigator.pop(context);
+  }
+
+  void _toggleMute() {
+    setState(() {
+      _isMuted = !_isMuted;
+      _engine?.muteLocalAudioStream(_isMuted);
+    });
+  }
+
+  void _toggleCamera() {
+    setState(() {
+      _isCameraOff = !_isCameraOff;
+      _engine?.muteLocalVideoStream(_isCameraOff);
+    });
+  }
+
+  void _switchCamera() {
+    _engine?.switchCamera();
   }
 
   @override
@@ -105,7 +126,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         title: Column(
           children: [
             Text(
-              widget.userName,
+              widget.call.receiverName,
               style: style17.copyWith(
                 color: whiteColor,
                 fontWeight: FontWeight.w600,
@@ -128,13 +149,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   controller: VideoViewController.remote(
                     rtcEngine: _engine!,
                     canvas: VideoCanvas(uid: _remoteUid),
-                    connection: RtcConnection(channelId: channelName),
+                    connection:
+                        RtcConnection(channelId: widget.call.channelName),
                   ),
                 )
               : Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage(widget.profileImage),
+                      image: AssetImage(widget.call.receiverName),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -181,26 +203,24 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildCallControlButton(
-                  icon: Icons.mic_off,
+                  icon: _isMuted ? Icons.mic : Icons.mic_off,
                   color: PrimarybuttonColor,
-                  onPressed: () {},
+                  onPressed: _toggleMute,
                 ),
                 _buildCallControlButton(
-                  icon: Icons.videocam_off,
+                  icon: _isCameraOff ? Icons.videocam : Icons.videocam_off,
                   color: PrimarybuttonColor,
-                  onPressed: () {},
+                  onPressed: _toggleCamera,
                 ),
                 _buildCallControlButton(
                   icon: Icons.call_end,
                   color: SecondarybuttonColor,
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: _handleCallEnd,
                 ),
                 _buildCallControlButton(
                   icon: Icons.flip_camera_ios,
                   color: PrimarybuttonColor,
-                  onPressed: () {},
+                  onPressed: _switchCamera,
                 ),
               ],
             ),
@@ -254,7 +274,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           BoxShadow(
             color: color.withOpacity(0.3),
             blurRadius: 8,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
