@@ -6,14 +6,16 @@ import 'package:code_structure/core/services/call_minutes_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class StripeService {
-  // Replace with your actual backend API URL to create payment intents
-  static const String _apiBase = 'YOUR_BACKEND_API_URL';
-
   // Your Stripe publishable key from the dashboard
-  static const String _publishableKey = 'YOUR_STRIPE_PUBLISHABLE_KEY';
+  static const String _publishableKey =
+      'pk_test_51Lxl0OLy0LoiWOlnlZH3GNGXV7vDAjj9uJcVYcNiPcBapitoe0HGLXebIsQ3zvMRFSAJwNxibAojwCc6pUNO2Svm00CRrVl3ua';
 
   static final CallMinutesService _callMinutesService = CallMinutesService();
   static final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Firebase Functions URL - replace with your actual URL after deploying
+  static const String _apiBase =
+      'https://createpaymentintent-lczraojsja-uc.a.run.app';
 
   // Initialize Stripe
   static Future<void> initialize() async {
@@ -32,11 +34,18 @@ class StripeService {
       // Convert amount to cents/smallest currency unit
       final amountInCents = (double.parse(amount) * 100).round().toString();
 
-      // API call to your backend endpoint
+      // Get the user's ID token
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // API call to Firebase Functions endpoint
       final response = await http.post(
-        Uri.parse('$_apiBase/create-payment-intent'),
+        Uri.parse('$_apiBase'),
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
         },
         body: jsonEncode({
           'amount': amountInCents,
@@ -45,6 +54,10 @@ class StripeService {
           'metadata': metadata,
         }),
       );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to create payment intent: ${response.body}');
+      }
 
       return jsonDecode(response.body);
     } catch (e) {

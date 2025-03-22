@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:code_structure/core/constants/collection_identifiers.dart';
 import 'package:code_structure/core/model/chat.dart';
 import 'package:code_structure/core/model/message.dart';
 import 'package:uuid/uuid.dart';
@@ -14,7 +15,7 @@ class ChatService {
       if (!isGroup) {
         // For personal chat, check if chat already exists
         final QuerySnapshot existingChats = await _firestore
-            .collection('chats')
+            .collection(ChatCollection)
             .where('participants', arrayContainsAny: participants)
             .where('isGroup', isEqualTo: false)
             .get();
@@ -44,7 +45,10 @@ class ChatService {
         unreadCount: 0,
       );
 
-      await _firestore.collection('chats').doc(chatId).set(chat.toJson());
+      await _firestore
+          .collection(ChatCollection)
+          .doc(chatId)
+          .set(chat.toJson());
       return chatId;
     } catch (e) {
       print('Error creating/getting chat: $e');
@@ -56,14 +60,14 @@ class ChatService {
   Future<void> sendMessage(Message message, String chatId) async {
     try {
       await _firestore
-          .collection('chats')
+          .collection(ChatCollection)
           .doc(chatId)
           .collection('messages')
           .doc(message.id)
           .set(message.toJson());
 
       // Update last message in chat
-      await _firestore.collection('chats').doc(chatId).update({
+      await _firestore.collection(ChatCollection).doc(chatId).update({
         'lastMessage': message.content,
         'lastMessageType': message.type.toString(),
         'lastMessageTime': message.timestamp,
@@ -78,7 +82,7 @@ class ChatService {
   // Get chat messages stream
   Stream<List<Message>> getMessages(String chatId) {
     return _firestore
-        .collection('chats')
+        .collection(ChatCollection)
         .doc(chatId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
@@ -93,7 +97,7 @@ class ChatService {
   // Get user chats stream
   Stream<List<Chat>> getUserChats(String userId) {
     return _firestore
-        .collection('chats')
+        .collection(ChatCollection)
         .where('participants', arrayContains: userId)
         .snapshots()
         .map((snapshot) {
@@ -107,7 +111,7 @@ class ChatService {
   Future<void> deleteMessage(String chatId, String messageId) async {
     try {
       await _firestore
-          .collection('chats')
+          .collection(ChatCollection)
           .doc(chatId)
           .collection('messages')
           .doc(messageId)

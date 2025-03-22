@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:code_structure/core/constants/collection_identifiers.dart';
 import 'package:code_structure/core/model/story.dart';
 
 class StoryService {
@@ -7,7 +8,7 @@ class StoryService {
   Stream<List<Story>> getStories() {
     // Get stories that haven't expired yet
     return _firestore
-        .collection('stories')
+        .collection(StoriesCollection)
         .where('expiresAt', isGreaterThan: Timestamp.fromDate(DateTime.now()))
         .orderBy('expiresAt', descending: true)
         .snapshots()
@@ -20,7 +21,7 @@ class StoryService {
 
   Future<List<Story>> getStoriesForUser(String userId) async {
     final snapshot = await _firestore
-        .collection('stories')
+        .collection(StoriesCollection)
         .where('userId', isEqualTo: userId)
         .where('expiresAt', isGreaterThan: Timestamp.fromDate(DateTime.now()))
         .orderBy('expiresAt', descending: true)
@@ -48,18 +49,18 @@ class StoryService {
       caption: caption,
     );
 
-    await _firestore.collection('stories').add(story.toJson());
+    await _firestore.collection(StoriesCollection).add(story.toJson());
   }
 
   Future<void> viewStory(String storyId, String userId) async {
-    await _firestore.collection('stories').doc(storyId).update({
+    await _firestore.collection(StoriesCollection).doc(storyId).update({
       'viewedBy': FieldValue.arrayUnion([userId]),
       'viewCount': FieldValue.increment(1),
     });
   }
 
   Future<void> addComment(String storyId) async {
-    await _firestore.collection('stories').doc(storyId).update({
+    await _firestore.collection(StoriesCollection).doc(storyId).update({
       'commentCount': FieldValue.increment(1),
     });
   }

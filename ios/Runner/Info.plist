@@ -47,6 +47,10 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Need camera access for video calls</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan your card to add it automatically</string>
+	<key>NSCameraUsageDescription</key>
+	<string>To scan cards</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Need microphone access for audio calls</string>
 	<key>UIBackgroundModes</key>

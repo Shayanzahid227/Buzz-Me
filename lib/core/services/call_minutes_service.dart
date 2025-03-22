@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:code_structure/core/constants/collection_identifiers.dart';
 import 'package:uuid/uuid.dart';
 import 'package:code_structure/core/model/call_minutes.dart';
 import 'package:code_structure/core/model/transaction.dart' as app_transaction;
@@ -9,12 +10,13 @@ class CallMinutesService {
   // Get call minutes for a user
   Future<CallMinutes> getCallMinutes(String userId) async {
     try {
-      final userDoc = await _firestore.collection('users').doc(userId).get();
+      final userDoc =
+          await _firestore.collection(AppUserCollection).doc(userId).get();
 
       if (!userDoc.exists || !userDoc.data()!.containsKey('callMinutes')) {
         // Create default call minutes if not exists
         final defaultMinutes = CallMinutes();
-        await _firestore.collection('users').doc(userId).update({
+        await _firestore.collection(AppUserCollection).doc(userId).update({
           'callMinutes': defaultMinutes.toMap(),
         });
         return defaultMinutes;
@@ -30,7 +32,7 @@ class CallMinutesService {
   // Update call minutes for a user
   Future<void> updateCallMinutes(String userId, CallMinutes callMinutes) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
+      await _firestore.collection(AppUserCollection).doc(userId).update({
         'callMinutes': callMinutes.toMap(),
       });
     } catch (e) {
@@ -122,7 +124,7 @@ class CallMinutesService {
       );
 
       await _firestore
-          .collection('transactions')
+          .collection(TransactionsCollection)
           .doc(id)
           .set(transaction.toMap());
     } catch (e) {
@@ -134,7 +136,7 @@ class CallMinutesService {
   // Get transaction history for a user
   Stream<List<app_transaction.Transaction>> getUserTransactions(String userId) {
     return _firestore
-        .collection('transactions')
+        .collection(TransactionsCollection)
         .where('userId', isEqualTo: userId)
         .orderBy('timestamp', descending: true)
         .snapshots()

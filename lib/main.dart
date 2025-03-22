@@ -1,5 +1,6 @@
 import 'package:code_structure/core/providers/all_users_provider.dart';
 import 'package:code_structure/core/providers/call_minutes_provider.dart';
+import 'package:code_structure/core/providers/call_provider.dart';
 import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/firebase_options.dart';
 import 'package:code_structure/ui/splash/splash_screen.dart';
@@ -77,6 +78,10 @@ class _MyAppState extends State<MyApp> {
           ),
           ChangeNotifierProvider(
             create: (context) => UserProvider(),
+            lazy: false,
+          ),
+          ChangeNotifierProvider(
+            create: (context) => CallProvider(),
             lazy: false,
           ),
           ChangeNotifierProvider(
