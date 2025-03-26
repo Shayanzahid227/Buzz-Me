@@ -5,7 +5,14 @@ class AppUser {
   String? uid;
 
   String? userName;
-  List<String?>? images;
+  List<String?>? images = [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ];
   DateTime? createdAt;
   DateTime? dob;
   String? gender;
@@ -17,8 +24,12 @@ class AppUser {
   bool? isOnline;
   DateTime? lastOnline;
 
-  //  LatLng? location;
+  // Location fields
+  double? latitude;
+  double? longitude;
   String? address;
+  String? city;
+  String? country;
 
   List<String>? interests;
   List<String>? lookingFor;
@@ -35,8 +46,18 @@ class AppUser {
 
   String? fcmToken;
 
+  // Subscription fields
+  bool? isVip;
+  DateTime? vipStartDate;
+  DateTime? vipEndDate;
+  String? subscriptionId;
+  String? subscriptionStatus;
+
   // Added callMinutes field
   CallMinutes? callMinutes;
+
+  // Added spotlight field
+  bool? inSpotlight;
 
   AppUser({
     this.uid,
@@ -58,8 +79,11 @@ class AppUser {
     this.about,
     this.isOnline,
     this.lastOnline,
-    //  this.location,
+    this.latitude,
+    this.longitude,
     this.address,
+    this.city,
+    this.country,
     this.interests,
     this.lookingFor,
     this.likes,
@@ -71,7 +95,13 @@ class AppUser {
     this.matched,
     this.visited,
     this.fcmToken,
+    this.isVip,
+    this.vipStartDate,
+    this.vipEndDate,
+    this.subscriptionId,
+    this.subscriptionStatus,
     this.callMinutes,
+    this.inSpotlight,
   });
 
   AppUser copyWith({
@@ -87,8 +117,11 @@ class AppUser {
     String? about,
     bool? isOnline,
     DateTime? lastOnline,
-    // LatLng? location,
+    double? latitude,
+    double? longitude,
     String? address,
+    String? city,
+    String? country,
     List<String>? interests,
     List<String>? lookingFor,
     List<String>? likes,
@@ -100,7 +133,13 @@ class AppUser {
     List<String>? matched,
     List<String>? visited,
     String? fcmToken,
+    bool? isVip,
+    DateTime? vipStartDate,
+    DateTime? vipEndDate,
+    String? subscriptionId,
+    String? subscriptionStatus,
     CallMinutes? callMinutes,
+    bool? inSpotlight,
   }) {
     return AppUser(
       uid: uid ?? this.uid,
@@ -115,8 +154,11 @@ class AppUser {
       about: about ?? this.about,
       isOnline: isOnline ?? this.isOnline,
       lastOnline: lastOnline ?? this.lastOnline,
-      // location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       address: address ?? this.address,
+      city: city ?? this.city,
+      country: country ?? this.country,
       interests: interests ?? this.interests,
       lookingFor: lookingFor ?? this.lookingFor,
       likes: likes ?? this.likes,
@@ -128,7 +170,13 @@ class AppUser {
       matched: matched ?? this.matched,
       visited: visited ?? this.visited,
       fcmToken: fcmToken ?? this.fcmToken,
+      isVip: isVip ?? this.isVip,
+      vipStartDate: vipStartDate ?? this.vipStartDate,
+      vipEndDate: vipEndDate ?? this.vipEndDate,
+      subscriptionId: subscriptionId ?? this.subscriptionId,
+      subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
       callMinutes: callMinutes ?? this.callMinutes,
+      inSpotlight: inSpotlight ?? this.inSpotlight,
     );
   }
 
@@ -141,15 +189,18 @@ class AppUser {
           createdAt != null ? Timestamp.fromDate(createdAt!) : DateTime.now(),
       'dob': dob != null ? Timestamp.fromDate(dob!) : null,
       'gender': gender ?? '',
-      'height': height ?? '',
-      'weight': weight ?? '',
+      'height': height ?? 0,
+      'weight': weight ?? 0,
       'relationshipStatus': relationshipStatus ?? '',
       'about': about ?? '',
       'isOnline': isOnline ?? true,
       'lastOnline':
           lastOnline != null ? Timestamp.fromDate(lastOnline!) : DateTime.now(),
-      // 'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
       'address': address ?? '',
+      'city': city ?? '',
+      'country': country ?? '',
       'interests': interests ?? [],
       'lookingFor': lookingFor ?? [],
       'likes': likes ?? [],
@@ -161,7 +212,14 @@ class AppUser {
       'matched': matched ?? [],
       'visited': visited ?? [],
       'fcmToken': fcmToken ?? '',
+      'isVip': isVip ?? false,
+      'vipStartDate':
+          vipStartDate != null ? Timestamp.fromDate(vipStartDate!) : null,
+      'vipEndDate': vipEndDate != null ? Timestamp.fromDate(vipEndDate!) : null,
+      'subscriptionId': subscriptionId ?? '',
+      'subscriptionStatus': subscriptionStatus ?? '',
       'callMinutes': callMinutes?.toMap() ?? CallMinutes().toMap(),
+      'inSpotlight': inSpotlight ?? false,
     };
   }
 
@@ -179,8 +237,11 @@ class AppUser {
       about: json['about'],
       isOnline: json['isOnline'],
       lastOnline: (json['lastOnline'] as Timestamp).toDate(),
-      // location: json['location'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
       address: json['address'],
+      city: json['city'],
+      country: json['country'],
       interests: List<String>.from(json['interests'] ?? []),
       lookingFor: List<String>.from(json['lookingFor'] ?? []),
       likes: List<String>.from(json['likes'] ?? []),
@@ -192,7 +253,17 @@ class AppUser {
       matched: List<String>.from(json['matched'] ?? []),
       visited: List<String>.from(json['visited'] ?? []),
       fcmToken: json['fcmToken'],
+      isVip: json['isVip'],
+      vipStartDate: json['vipStartDate'] != null
+          ? (json['vipStartDate'] as Timestamp).toDate()
+          : null,
+      vipEndDate: json['vipEndDate'] != null
+          ? (json['vipEndDate'] as Timestamp).toDate()
+          : null,
+      subscriptionId: json['subscriptionId'],
+      subscriptionStatus: json['subscriptionStatus'],
       callMinutes: CallMinutes.fromMap(json['callMinutes']),
+      inSpotlight: json['inSpotlight'] ?? false,
     );
   }
 }

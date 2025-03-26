@@ -11,12 +11,14 @@ class CallProvider extends ChangeNotifier {
   final CallRepository _callRepository = CallRepository();
   final NotificationService _notificationService = NotificationService();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  // final CallService _callService;
+  final CallService _callService;
   Call? _currentCall;
   Stream<Call?>? _callStream;
   DateTime? _callStartTime;
 
-  CallProvider();
+  CallProvider(
+    this._callService,
+  );
 
   Call? get currentCall => _currentCall;
   Stream<Call?>? get callStream => _callStream;

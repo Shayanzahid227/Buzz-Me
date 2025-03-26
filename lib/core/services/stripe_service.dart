@@ -193,6 +193,72 @@ class StripeService {
       );
     }
   }
+
+  // Create subscription
+  static Future<Map<String, dynamic>> createSubscription(
+    String userId,
+    String paymentMethodId, {
+    required double amount,
+    required String interval,
+  }) async {
+    try {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('$_apiBase/create-subscription'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'userId': userId,
+          'paymentMethodId': paymentMethodId,
+          'amount': (amount * 100).round(), // Convert to cents
+          'interval': interval,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to create subscription: ${response.body}');
+      }
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      print('Error creating subscription: $e');
+      throw Exception('Failed to create subscription');
+    }
+  }
+
+  // Cancel subscription
+  static Future<void> cancelSubscription(String subscriptionId) async {
+    try {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('$_apiBase/cancel-subscription'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        },
+        body: jsonEncode({
+          'subscriptionId': subscriptionId,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to cancel subscription: ${response.body}');
+      }
+    } catch (e) {
+      print('Error cancelling subscription: $e');
+      throw Exception('Failed to cancel subscription');
+    }
+  }
 }
 
 class PaymentIntentResult {

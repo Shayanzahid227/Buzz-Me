@@ -11,6 +11,8 @@ import 'package:code_structure/core/others/base_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 //******* */
 
 class FilterScreen extends StatefulWidget {
@@ -24,16 +26,32 @@ class _FilterScreenState extends State<FilterScreen>
     with TickerProviderStateMixin {
   double _distanceValue = 50.0;
   List<double> _ageRangeValues = [18.0, 30.0];
+  String _selectedGender = 'Both';
+  String _currentLocation = 'Select current location';
+  double? _currentLatitude;
+  double? _currentLongitude;
 
-  ///
-  ///
-  ///
-  String _currentLocation = 'select current location'; // Default location
-
-  void _updateLocation(String location) {
+  void _updateLocation(String location, {double? lat, double? lng}) {
     setState(() {
       _currentLocation = location;
+      _currentLatitude = lat;
+      _currentLongitude = lng;
     });
+  }
+
+  void _applyFilters() {
+    final filters = {
+      'minAge': _ageRangeValues[0].toInt(),
+      'maxAge': _ageRangeValues[1].toInt(),
+      'distance': _distanceValue.toInt(),
+      'gender': _selectedGender,
+      'latitude': _currentLatitude,
+      'longitude': _currentLongitude,
+      'location': _currentLocation,
+    };
+
+    // Close screen and return filters
+    Navigator.pop(context, filters);
   }
 
   ///
@@ -67,7 +85,9 @@ class _FilterScreenState extends State<FilterScreen>
                   _selectLocation(),
                   30.verticalSpace,
                   //// selecting age and distance range
-                  _buildFilterContent()
+                  _buildFilterContent(),
+                  30.verticalSpace,
+                  _buildApplyButton(),
                 ],
               ),
             ),
@@ -106,7 +126,7 @@ class _FilterScreenState extends State<FilterScreen>
         Text(
           "Show me ",
           style: style17.copyWith(
-            color: lightGreyColor5,
+            color: blackColor,
           ),
         ),
         20.verticalSpacingDiameter,
@@ -131,6 +151,18 @@ class _FilterScreenState extends State<FilterScreen>
               ),
             ),
             isScrollable: true,
+            onTap: (value) {
+              switch (value) {
+                case 0:
+                  _selectedGender = 'Male';
+                case 1:
+                  _selectedGender = 'Female';
+                case 2:
+                  _selectedGender = 'Both';
+                default:
+                  _selectedGender = 'Both';
+              }
+            },
             //  labelPadding: EdgeInsets.symmetric(horizontal: 30),
             tabs: [
               ///
@@ -197,7 +229,7 @@ class _FilterScreenState extends State<FilterScreen>
         Text(
           "Location",
           style: style17.copyWith(
-            color: lightGreyColor5,
+            color: blackColor,
           ),
         ),
         20.verticalSpacingDiameter,
@@ -218,7 +250,7 @@ class _FilterScreenState extends State<FilterScreen>
           children: [
             Text(
               'Distance',
-              style: style17.copyWith(color: lightGreyColor5),
+              style: style17.copyWith(color: blackColor),
             ),
             Text(
               '${_distanceValue.toInt()} km',
@@ -281,7 +313,7 @@ class _FilterScreenState extends State<FilterScreen>
           children: [
             Text(
               'Age range',
-              style: style17.copyWith(color: lightGreyColor5),
+              style: style17.copyWith(color: blackColor),
             ),
             Text(
               '${_ageRangeValues[0].toInt()} - ${_ageRangeValues[1].toInt()}',
@@ -403,24 +435,142 @@ class _FilterScreenState extends State<FilterScreen>
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               ListTile(
-                title: Text('Peshawar,KPK, Pakistan'),
-                onTap: () {
-                  _updateLocation('Peshawar, KPK, Pakistan');
-                  Navigator.pop(context); // Close the bottom sheet
+                leading: Icon(Icons.my_location),
+                title: Text('Use current location'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _getCurrentLocation();
                 },
               ),
               ListTile(
-                title: Text('Another Location'),
+                leading: Icon(Icons.search),
+                title: Text('Search location'),
                 onTap: () {
-                  _updateLocation('Another Location');
                   Navigator.pop(context);
+                  _showSearchLocationDialog(context);
                 },
               ),
-              // Add more location options here
             ],
           ),
         );
       },
+    );
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return;
+        }
+      }
+
+      Position position = await Geolocator.getCurrentPosition();
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address = '${place.locality}, ${place.country}';
+        _updateLocation(
+          address,
+          lat: position.latitude,
+          lng: position.longitude,
+        );
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+    }
+  }
+
+  void _showSearchLocationDialog(BuildContext context) {
+    final TextEditingController _searchController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Search Location'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Enter location',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('CANCEL'),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text('SEARCH'),
+              onPressed: () async {
+                if (_searchController.text.isNotEmpty) {
+                  try {
+                    List<Location> locations =
+                        await locationFromAddress(_searchController.text);
+                    if (locations.isNotEmpty) {
+                      Location location = locations[0];
+                      List<Placemark> placemarks =
+                          await placemarkFromCoordinates(
+                        location.latitude,
+                        location.longitude,
+                      );
+
+                      if (placemarks.isNotEmpty) {
+                        Placemark place = placemarks[0];
+                        _updateLocation(
+                          _searchController.text,
+                          lat: location.latitude,
+                          lng: location.longitude,
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    print('Error searching location: $e');
+                  }
+                  Navigator.pop(context);
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildApplyButton() {
+    return Container(
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: indicatorColor,
+          padding: EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        onPressed: _applyFilters,
+        child: Text(
+          'Apply Filters',
+          style: style17.copyWith(color: whiteColor),
+        ),
+      ),
     );
   }
 }

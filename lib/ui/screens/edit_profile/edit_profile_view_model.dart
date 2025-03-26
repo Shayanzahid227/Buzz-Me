@@ -9,6 +9,10 @@ import 'package:code_structure/core/services/image_cache_helper.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+
+enum ProfileMode { registration, update }
 
 class EditProfileViewModel extends BaseViewModel {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,175 +21,370 @@ class EditProfileViewModel extends BaseViewModel {
   final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
 
-  AppUser appUser = AppUser();
-  List<File?> selectedImages = [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null,
+  late AppUser appUser;
+  late ProfileMode mode;
+  bool get isRegistration => mode == ProfileMode.registration;
+
+  List<File?> selectedImages = List.filled(6, null);
+  List<bool> imageChanged = List.filled(6, false);
+
+  // Predefined options
+  final List<String> predefinedGenders = [
+    'Male',
+    'Female',
+    'Non-binary',
+    'Other',
+    'Prefer not to say',
   ];
 
-  EditProfileViewModel() {
-    getUser();
+  final List<String> predefinedLookingFor = [
+    'Friendship',
+    'Dating',
+    'Long-term Relationship',
+    'Marriage',
+    'Casual',
+  ];
+
+  final List<String> predefinedRelationshipStatus = [
+    'Single',
+    'In a relationship',
+    'Married',
+    'Divorced',
+    'It\'s complicated',
+    'Prefer not to say',
+  ];
+
+  EditProfileViewModel({ProfileMode? mode}) {
+    this.mode = mode ?? ProfileMode.update;
+    _initializeUser();
   }
 
-  getUser() async {
+  Future<void> _initializeUser() async {
     setState(ViewState.busy);
-    appUser =
-        await _databaseServices.getUser(_auth.currentUser!.uid) ?? AppUser();
-    setState(ViewState.idle);
-  }
+    appUser = AppUser(
+      images: List.filled(6, null),
+      interests: [],
+      lookingFor: [],
+      createdAt: DateTime.now(),
+    );
 
-  updateUser() async {
-    setState(ViewState.busy);
-    appUser.uid = _auth.currentUser!.uid;
-    appUser.createdAt ??= DateTime.now();
-    appUser.fcmToken = await _firebaseMessaging.getToken();
-
-    // Update images array based on deletions and new selections
-    for (int i = 0; i < appUser.images!.length; i++) {
-      // If a position has been marked for deletion (null in the appUser array)
-      // but doesn't have a new selection, keep it as null
-      if (appUser.images![i] == null && selectedImages[i] == null) {
-        continue;
-      }
-
-      // If there's a new selected image, upload it
-      if (selectedImages[i] != null) {
-        String url = await _storageService.uploadProfileImage(
-            selectedImages[i]!, _auth.currentUser!.uid);
-        appUser.images![i] = url;
-
-        // Cache the uploaded image
-        try {
-          await ImageCacheHelper.cacheLocalFile(url, selectedImages[i]!);
-        } catch (e) {
-          print('Error caching uploaded image: $e');
-        }
+    if (isRegistration) {
+      // For new registration, create a new AppUser instance
+      appUser = AppUser(
+        images: List.filled(6, null),
+        interests: [],
+        lookingFor: [],
+        createdAt: DateTime.now(),
+      );
+    } else {
+      // For profile update, fetch existing user data
+      try {
+        final userData =
+            await _databaseServices.getUser(_auth.currentUser!.uid);
+        appUser = userData ??
+            AppUser(
+              images: List.filled(6, null),
+              interests: [],
+              lookingFor: [],
+              createdAt: DateTime.now(),
+            );
+      } catch (e) {
+        print('Error fetching user data: $e');
+        // Handle error appropriately
       }
     }
 
-    await _databaseServices.setUser(appUser);
     setState(ViewState.idle);
   }
 
-  updateName(String name) {
-    appUser.userName = name;
-    notifyListeners();
+  bool get isProfileComplete {
+    return appUser.userName != null &&
+        appUser.dob != null &&
+        appUser.gender != null &&
+        appUser.about != null &&
+        appUser.about!.isNotEmpty &&
+        (selectedImages?.any((img) => img != null) ?? false);
   }
 
-  updateAbout(String about) {
-    appUser.about = about;
-    notifyListeners();
-  }
-
-  updateGender(String gender) {
-    appUser.gender = gender;
-    notifyListeners();
-  }
-
-  updateRelationshipStatus(String status) {
-    appUser.relationshipStatus = status;
-    notifyListeners();
-  }
-
-  updateDob(DateTime dob) {
-    appUser.dob = dob;
-    notifyListeners();
-  }
-
-  updateHeight(int height) {
-    appUser.height = height;
-    notifyListeners();
-  }
-
-  updateWeight(int weight) {
-    appUser.weight = weight;
-    notifyListeners();
-  }
-
-  addInterest(String interest) {
-    appUser.interests?.add(interest);
-    notifyListeners();
-  }
-
-  updateLookingFor(List<String> lookingFor) {
-    appUser.lookingFor = lookingFor;
-    notifyListeners();
-  }
-
-  updateImages(List<String> images) {
-    appUser.images = images;
-    notifyListeners();
-  }
-
-  updateAddress(String address) {
-    appUser.address = address;
-    notifyListeners();
-  }
-
-  // updateLocation(String location) {
-  //   appUser.location = location;
-  //   notifyListeners();
-  // }
-
-  selectfromCamera(int index) {
-    _imagePicker.pickImage(source: ImageSource.camera).then((value) {
-      if (value != null) {
-        selectedImages[index] = File(value.path);
-        notifyListeners();
-      }
-    });
-  }
-
-  selectfromGallery(int index) async {
-    final XFile? image =
-        await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      selectedImages[index] = File(image.path);
-      notifyListeners();
-    }
-  }
-
-  /// Deletes an image at the specified index
-  deleteImage(int index) async {
+  Future<bool> updateUser() async {
     try {
       setState(ViewState.busy);
 
-      // Get the URL of the image to delete
-      final imageUrl = appUser.images?[index];
+      // Set or update basic user information
+      appUser.uid = _auth.currentUser!.uid;
+      appUser.createdAt ??= DateTime.now();
+      appUser.fcmToken = await _firebaseMessaging.getToken();
 
-      if (imageUrl != null) {
-        // Delete from Firebase Storage if it exists
-        try {
-          await _storageService.deleteFile(imageUrl);
-          print('Image deleted from storage: $imageUrl');
-        } catch (e) {
-          print('Error deleting image from storage: $e');
-          // Continue with local deletion even if remote deletion fails
-        }
+      // Handle image updates
+      for (int i = 0; i < selectedImages.length; i++) {
+        if (selectedImages[i] != null) {
+          // Upload new/changed images
+          String url = await _storageService.uploadProfileImage(
+              selectedImages[i]!, _auth.currentUser!.uid);
+          appUser.images![i] = url;
 
-        // Clear the cached version
-        try {
-          await ImageCacheHelper.removeFromCache(imageUrl);
-        } catch (e) {
-          print('Error removing image from cache: $e');
+          // Cache the uploaded image
+          try {
+            await ImageCacheHelper.cacheLocalFile(url, selectedImages[i]!);
+          } catch (e) {
+            print('Error caching uploaded image: $e');
+          }
         }
       }
 
-      // Update the app user model
-      appUser.images![index] = null;
+      // Update user in database
+      await _databaseServices.setUser(appUser);
 
-      // Clear any selected image for this index
+      setState(ViewState.idle);
+      return true;
+    } catch (e) {
+      print('Error updating user: $e');
+      setState(ViewState.idle);
+      return false;
+    }
+  }
+
+  // Image handling methods
+  Future<void> selectfromGallery(int index) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        selectedImages[index] = File(image.path);
+        imageChanged[index] = true;
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error selecting image: $e');
+    }
+  }
+
+  Future<bool> deleteImage(int index) async {
+    try {
+      setState(ViewState.busy);
+
+      final imageUrl = appUser.images?[index];
+
+      if (imageUrl != null) {
+        // Delete from storage
+        try {
+          await _storageService.deleteFile(imageUrl);
+          await ImageCacheHelper.removeFromCache(imageUrl);
+        } catch (e) {
+          print('Error deleting image: $e');
+        }
+      }
+
+      // Update model
+      appUser.images![index] = null;
       selectedImages[index] = null;
-      updateUser();
+      imageChanged[index] = true;
 
       setState(ViewState.idle);
       notifyListeners();
+      return true;
     } catch (e) {
       print('Error in deleteImage: $e');
+      setState(ViewState.idle);
+      return false;
+    }
+  }
+
+  // Profile update methods with validation
+  void updateField<T>(String field, T value) {
+    switch (field) {
+      case 'userName':
+        appUser.userName = value as String;
+        break;
+      case 'about':
+        appUser.about = value as String;
+        break;
+      case 'gender':
+        appUser.gender = value as String;
+        break;
+      case 'dob':
+        appUser.dob = value as DateTime;
+        break;
+      case 'height':
+        appUser.height = value as int;
+        break;
+      case 'weight':
+        appUser.weight = value as int;
+        break;
+      case 'relationshipStatus':
+        appUser.relationshipStatus = value as String;
+        break;
+    }
+    notifyListeners();
+  }
+
+  // Validation methods
+  String? validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username is required';
+    }
+    if (value.length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (value.length > 30) {
+      return 'Username must be less than 30 characters';
+    }
+    return null;
+  }
+
+  String? validateAbout(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please write something about yourself';
+    }
+    if (value.length < 10) {
+      return 'About section should be at least 10 characters';
+    }
+    if (value.length > 500) {
+      return 'About section should be less than 500 characters';
+    }
+    return null;
+  }
+
+  String? validateHeight(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Height is required';
+    }
+    final height = int.tryParse(value);
+    if (height == null) {
+      return 'Please enter a valid number';
+    }
+    if (height < 100 || height > 250) {
+      return 'Please enter a valid height (100-250 cm)';
+    }
+    return null;
+  }
+
+  String? validateWeight(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Weight is required';
+    }
+    final weight = int.tryParse(value);
+    if (weight == null) {
+      return 'Please enter a valid number';
+    }
+    if (weight < 30 || weight > 200) {
+      return 'Please enter a valid weight (30-200 kg)';
+    }
+    return null;
+  }
+
+  void toggleLookingFor(String item) {
+    appUser.lookingFor ??= [];
+    if (appUser.lookingFor!.contains(item)) {
+      appUser.lookingFor!.remove(item);
+    } else {
+      appUser.lookingFor!.add(item);
+    }
+    notifyListeners();
+  }
+
+  void addInterest(String interest) {
+    appUser.interests ??= [];
+    if (!appUser.interests!.contains(interest)) {
+      appUser.interests!.add(interest);
+      notifyListeners();
+    }
+  }
+
+  void removeInterest(String interest) {
+    appUser.interests?.remove(interest);
+    notifyListeners();
+  }
+
+  // Location methods
+  Future<bool> requestLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return false;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> updateLocation() async {
+    try {
+      setState(ViewState.busy);
+
+      bool hasPermission = await requestLocationPermission();
+      if (!hasPermission) {
+        setState(ViewState.idle);
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition();
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        print(place.toString());
+        appUser.latitude = position.latitude;
+        appUser.longitude = position.longitude;
+        appUser.address =
+            '${place.subAdministrativeArea}, ${place.administrativeArea}, ${place.country}';
+        appUser.city = place.subAdministrativeArea;
+        appUser.country = place.country;
+
+        notifyListeners();
+      }
+    } catch (e) {
+      print('Error updating location: $e');
+    } finally {
+      setState(ViewState.idle);
+    }
+  }
+
+  Future<void> updateCustomLocation(String address) async {
+    try {
+      setState(ViewState.busy);
+
+      List<Location> locations = await locationFromAddress(address);
+
+      if (locations.isNotEmpty) {
+        Location location = locations[0];
+        List<Placemark> placemarks = await placemarkFromCoordinates(
+          location.latitude,
+          location.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          Placemark place = placemarks[0];
+          appUser.latitude = location.latitude;
+          appUser.longitude = location.longitude;
+          appUser.address = address;
+          appUser.city = place.locality;
+          appUser.country = place.country;
+
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      print('Error updating custom location: $e');
+    } finally {
       setState(ViewState.idle);
     }
   }

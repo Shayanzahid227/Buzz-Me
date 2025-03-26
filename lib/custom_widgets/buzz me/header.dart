@@ -38,12 +38,12 @@ class customHeader extends StatelessWidget {
                   : greyColor.shade300,
               //  backgroundColor: Color(0xffFFA180),
               radius: 22,
-              child: Image(image: AssetImage(image!)),
-              // child: Icon(
-              //   Icons.filter_list_rounded,
-              //   color: Colors.white,
-              //   size: 30.h,
-              // ),
+              // child: Image(image: AssetImage(image!)),
+              child: Icon(
+                Icons.filter_list_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
 
               // backgroundImage: AssetImage(AppAssets().fbIcon),
             ),

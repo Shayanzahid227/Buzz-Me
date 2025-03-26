@@ -9,8 +9,17 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomDiscoverWIdget extends StatelessWidget {
   final AppUser appUser;
+  final onRewindTap;
+  final onAudioCallTap;
+  final onVideoCallTap;
+  final onSuperLikeTap;
+
   const CustomDiscoverWIdget({
     required this.appUser,
+    required this.onRewindTap,
+    required this.onAudioCallTap,
+    required this.onVideoCallTap,
+    required this.onSuperLikeTap,
     super.key,
   });
 
@@ -121,49 +130,58 @@ class CustomDiscoverWIdget extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const CircleAvatar(
-                  backgroundColor: whiteColor,
-                  radius: 25,
-                  child: Icon(
-                    Icons.refresh_rounded,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  height: 73.h,
-                  width: 73.w,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Color(0xffDB2719),
-                    ),
-                    shape: BoxShape.circle,
-                    color: Colors.red,
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
+                GestureDetector(
+                  onTap: onRewindTap,
+                  child: const CircleAvatar(
+                    backgroundColor: whiteColor,
+                    radius: 25,
                     child: Icon(
-                      Icons.video_camera_back,
+                      Icons.refresh_rounded,
                       size: 30,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  height: 73.h,
-                  width: 73.w,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Color(0xffDB2719),
+                GestureDetector(
+                  onTap: onVideoCallTap,
+                  child: Container(
+                    height: 73.h,
+                    width: 73.w,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Color(0xffDB2719),
+                      ),
+                      shape: BoxShape.circle,
+                      color: Colors.red,
                     ),
-                    shape: BoxShape.circle,
-                    color: Colors.white,
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.video_camera_back,
+                        size: 30,
+                      ),
+                    ),
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Icon(
-                      Icons.call,
-                      size: 30,
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onAudioCallTap,
+                  child: Container(
+                    height: 73.h,
+                    width: 73.w,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Color(0xffDB2719),
+                      ),
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.call,
+                        size: 30,
+                      ),
                     ),
                   ),
                 ),
@@ -172,10 +190,13 @@ class CustomDiscoverWIdget extends StatelessWidget {
                 //   child: Icon(Icons.call),
                 // ),
                 const SizedBox(width: 8),
-                const CircleAvatar(
-                  backgroundColor: whiteColor,
-                  radius: 25,
-                  child: Icon(Icons.star),
+                GestureDetector(
+                  onTap: onSuperLikeTap,
+                  child: const CircleAvatar(
+                    backgroundColor: whiteColor,
+                    radius: 25,
+                    child: Icon(Icons.star),
+                  ),
                 ),
               ],
             ),

@@ -8,6 +8,7 @@ const Color pinkColor = Colors.pink;
 const Color SecondarybuttonColor = pinkColor;
 const Color transparentColor = Colors.transparent;
 const Color borderColor = Color(0xffDAD9E2);
+const Color redColor = Colors.red;
 //************************************************************/
 const Color whiteColor = Colors.white;
 const greyColor = Colors.grey;
@@ -38,3 +39,14 @@ const Color fillColor2 =
 const Color lightDividerColor = Color(0xFFF5F5F5);
 
 const Color scaffoldBackgroundColor = Color(0xFFF9FAFC); // wallet section
+
+///
+///vip center
+///
+const Color darkPurpleColor = Color(0xff5A52F2); // vip center
+const Color lightPurpleColor = Color(0xff9648F2); // vip center
+const Color pinlColor = Color(0xffFF61A3);
+const Color lightPurple1 = Color(0xffB35FE6);
+const Color lightPurple2 = Color(0xffC480E9);
+const Color lightPurple3 = Color(0xffE6C7F5);
+const Color appBarColor = Color(0xffECECEC);

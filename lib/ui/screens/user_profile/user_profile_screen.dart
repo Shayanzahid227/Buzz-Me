@@ -5,6 +5,7 @@ import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/core/services/chat_services.dart';
+import 'package:code_structure/core/services/vip_service.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for.dart';
@@ -16,10 +17,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:code_structure/core/constants/collection_identifiers.dart';
 
 class UserProfileScreen extends StatelessWidget {
   final ChatService _chatService = ChatService();
-
+  // final VipService _vipService = VipService();
   final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   final AppUser appUser;
@@ -33,120 +36,147 @@ class UserProfileScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => UserProfileViewModel(appUser.uid ?? ''),
       child: Consumer<UserProfileViewModel>(
-        builder: (context, model, child) => Scaffold(
-          body: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _userProfile(model, context),
-                _about(),
-                _basicProfile(model, context),
-                _interesting(model, context),
-                20.verticalSpace,
-                _LookingFor(model, context),
-                50.verticalSpace,
-              ],
+        builder: (context, model, child) {
+          // Check incognito mode when screen is built
+          _checkIncognitoMode(appUser.uid!);
+          return Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _userProfile(model, context),
+                  _about(),
+                  _basicProfile(model, context),
+                  _interesting(model, context),
+                  20.verticalSpace,
+                  _LookingFor(model, context),
+                  50.verticalSpace,
+                ],
+              ),
             ),
-          ),
-          floatingActionButton: Container(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    model.giveLike(appUser.uid!);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            spreadRadius: 0,
-                            blurRadius: 10,
-                            offset: Offset(0, 2), // changes position of shadow
-                          )
-                        ]),
-                    child: Icon(
-                      Icons.heart_broken,
-                      color: Colors.red,
-                    ),
-                  ),
-                ),
-                20.horizontalSpace,
-                GestureDetector(
-                  onTap: () {
-                    model.giveSuperLike(appUser.uid!);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            spreadRadius: 0,
-                            blurRadius: 10,
-                            offset: Offset(0, 2), // changes position of shadow
-                          )
-                        ]),
-                    child: Icon(
-                      Icons.star,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-                20.horizontalSpace,
-                GestureDetector(
-                  onTap: () async {
-                    final chatId = await _chatService.createOrGetChat(
-                      [currentUserId, appUser.uid!],
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          chatId: chatId,
-                          currentUserId: currentUserId,
-                          otherUserId: appUser.uid!,
-                          otherUserfcm: appUser.fcmToken,
-                          isGroup: false,
-                          title: appUser.userName ?? '',
-                          imageUrl: appUser.images![0],
-                        ),
+            floatingActionButton: Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      model.giveLike(appUser.uid!);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(20.w),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              spreadRadius: 0,
+                              blurRadius: 10,
+                              offset:
+                                  Offset(0, 2), // changes position of shadow
+                            )
+                          ]),
+                      child: Icon(
+                        Icons.heart_broken,
+                        color: Colors.red,
                       ),
-                    );
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(20.w),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            spreadRadius: 0,
-                            blurRadius: 10,
-                            offset: Offset(0, 2), // changes position of shadow
-                          )
-                        ]),
-                    child: Icon(
-                      Icons.message,
-                      color: Colors.blue,
                     ),
                   ),
-                ),
-              ],
+                  20.horizontalSpace,
+                  GestureDetector(
+                    onTap: () {
+                      model.giveSuperLike(appUser.uid!);
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(20.w),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              spreadRadius: 0,
+                              blurRadius: 10,
+                              offset:
+                                  Offset(0, 2), // changes position of shadow
+                            )
+                          ]),
+                      child: Icon(
+                        Icons.star,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                  20.horizontalSpace,
+                  GestureDetector(
+                    onTap: () async {
+                      final chatId = await _chatService.createOrGetChat(
+                        [currentUserId, appUser.uid!],
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            chatId: chatId,
+                            currentUserId: currentUserId,
+                            otherUserId: appUser.uid!,
+                            otherUserfcm: appUser.fcmToken,
+                            isGroup: false,
+                            title: appUser.userName ?? '',
+                            imageUrl: appUser.images![0],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(20.w),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.12),
+                              spreadRadius: 0,
+                              blurRadius: 10,
+                              offset:
+                                  Offset(0, 2), // changes position of shadow
+                            )
+                          ]),
+                      child: Icon(
+                        Icons.message,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.centerFloat,
-        ),
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+          );
+        },
       ),
     );
+  }
+
+  Future<void> _checkIncognitoMode(String visitedUserId) async {
+    try {
+      // final isIncognito = await _vipService.isIncognitoModeEnabled();
+      // if (isIncognito) {
+      //   // Don't add to visitors list if in incognito mode
+      //   return;
+      // }
+
+      // Add to visitors list if not in incognito mode
+      await FirebaseFirestore.instance
+          .collection(AppUserCollection)
+          .doc(visitedUserId)
+          .update({
+        'visits': FieldValue.arrayUnion([currentUserId])
+      });
+    } catch (e) {
+      print('Error checking incognito mode: $e');
+    }
   }
 
   ///

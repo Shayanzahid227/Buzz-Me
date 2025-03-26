@@ -1,3 +1,5 @@
+import 'package:code_structure/core/services/stripe_service.dart';
+import 'package:code_structure/ui/screens/checkout/checkout_success_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:code_structure/core/constants/colors.dart';
@@ -38,6 +40,57 @@ class CartSummaryScreen extends StatelessWidget {
       'audio': audioMinutes,
       'video': videoMinutes,
     };
+  }
+
+  Future<void> _processPayment(
+    BuildContext context, {
+    totalAmount,
+    audioMinutes,
+    videoMinutes,
+    paymentMethod,
+  }) async {
+    try {
+      // Use the Stripe service to process the payment
+      final result = await StripeService.purchaseCallMinutes(
+        context,
+        totalAmount,
+        audioMinutes,
+        videoMinutes,
+        paymentMethod,
+      );
+
+      if (result.isSuccess) {
+        // Refresh call minutes data
+        final callMinutesProvider =
+            Provider.of<CallMinutesProvider>(context, listen: false);
+        await callMinutesProvider.refreshCallMinutes();
+
+        // Navigate to success screen
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CheckoutSuccessScreen(),
+          ),
+          (route) => route.isFirst,
+        );
+      } else {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Payment failed: ${result.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {}
   }
 
   @override
@@ -276,17 +329,24 @@ class CartSummaryScreen extends StatelessWidget {
                 // Checkout button
                 GestureDetector(
                   onTap: () {
-                    Navigator.push(
+                    _processPayment(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => PaymentMethodScreen(
-                          totalAmount: total,
-                          audioMinutes: minutesPurchased['audio']!,
-                          videoMinutes: minutesPurchased['video']!,
-                          paymentMethod: 'stripe',
-                        ),
-                      ),
+                      totalAmount: total,
+                      audioMinutes: minutesPurchased['audio']!,
+                      videoMinutes: minutesPurchased['video']!,
+                      paymentMethod: 'stripe',
                     );
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => PaymentMethodScreen(
+                    //       totalAmount: total,
+                    //       audioMinutes: minutesPurchased['audio']!,
+                    //       videoMinutes: minutesPurchased['video']!,
+                    //       paymentMethod: 'stripe',
+                    //     ),
+                    //   ),
+                    // );
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 20.h),

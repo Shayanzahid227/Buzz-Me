@@ -3,6 +3,7 @@ import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/enums/view_state_model.dart';
 import 'package:code_structure/core/model/user_profile.dart';
+import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:code_structure/ui/screens/edit_profile/edit_profile_view_model.dart';
 import 'package:flutter/material.dart';
@@ -20,8 +21,8 @@ class EditProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => EditProfileViewModel(),
-      child:
-          Consumer<EditProfileViewModel>(builder: (context, viewModel, child) {
+      child: Consumer2<EditProfileViewModel, UserProvider>(
+          builder: (context, viewModel, userProvider, child) {
         return ModalProgressHUD(
           inAsyncCall: viewModel.state == ViewState.busy,
           progressIndicator: CircularProgressIndicator(
@@ -41,8 +42,11 @@ class EditProfileScreen extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () async {
-                    await viewModel.updateUser();
-                    Navigator.of(context).pop();
+                    if (viewModel.isProfileComplete) {
+                      await viewModel.updateUser();
+                      userProvider.getUser();
+                      Navigator.of(context).pop();
+                    }
                   },
                   child:
                       const Text("Done", style: TextStyle(color: Colors.pink)),
@@ -89,16 +93,26 @@ class EditProfileScreen extends StatelessWidget {
                   36.verticalSpace,
 
                   // About you
-                  Text(
-                    "About you",
-                    style: style25B,
-                  ),
-                  10.verticalSpace,
-                  Text(
-                    viewModel.appUser.about ?? "Not set",
-                    style: style17.copyWith(
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
+                  GestureDetector(
+                    onTap: () => _displayAboutDialog(context, viewModel),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "About you",
+                          style: style25B,
+                        ),
+                        10.verticalSpace,
+                        Text(
+                          viewModel.appUser.about ?? "Tap to add description",
+                          style: style17.copyWith(
+                            fontWeight: FontWeight.w400,
+                            color: viewModel.appUser.about != null
+                                ? Colors.black
+                                : Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   19.verticalSpace,
@@ -131,9 +145,12 @@ class EditProfileScreen extends StatelessWidget {
                       _displayRelationshipStatusDialog(context, viewModel);
                     },
                   ),
-                  _buildInfoRow("Looking for",
-                      viewModel.appUser.lookingFor?.join(', ') ?? 'Not set',
-                      showArrow: true),
+                  _buildInfoRow(
+                    "Looking for",
+                    viewModel.appUser.lookingFor?.join(', ') ?? 'Not set',
+                    showArrow: true,
+                    onTap: () => _displayLookingForDialog(context, viewModel),
+                  ),
 
                   30.verticalSpace,
 
@@ -200,17 +217,34 @@ class EditProfileScreen extends StatelessWidget {
                             Icons.location_on,
                             color: lightGreyColor,
                           ),
-                          Text(
-                            "Current location",
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          Spacer(),
-                          Text(
-                            "Seattle, WA",
-                            style: style17.copyWith(
-                              color: lightGreyColor3,
-                              fontWeight: FontWeight.w400,
+                          10.horizontalSpace,
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _showLocationOptions(context, viewModel),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Current location",
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  if (viewModel.appUser.address != null)
+                                    Text(
+                                      "${viewModel.appUser.address}",
+                                      style: style17.copyWith(
+                                        color: lightGreyColor3,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 12,
+                            color: lightGreyColor,
                           ),
                         ],
                       ),
@@ -232,33 +266,102 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
+  // Add this common dialog theme
+  ThemeData _getDialogTheme() {
+    return ThemeData(
+      colorScheme: ColorScheme.light(
+        primary: lightPinkColor,
+        secondary: lightOrangeColor,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: lightPinkColor,
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: lightPinkColor),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.red),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      ),
+    );
+  }
+
+  // Enhanced username dialog
   Future<void> _displayUsernameDialog(
       BuildContext context, EditProfileViewModel viewModel) async {
-    TextEditingController _userNameController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController _userNameController =
+        TextEditingController(text: viewModel.appUser.userName);
+
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Enter Username'),
-          content: TextField(
-            controller: _userNameController,
-            decoration: InputDecoration(hintText: 'Username'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Choose your username',
+            ),
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'This is how you\'ll appear to others',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  12.verticalSpace,
+                  TextFormField(
+                    controller: _userNameController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter username',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                    validator: viewModel.validateUsername,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: Text('SAVE'),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    viewModel.updateField('userName', _userNameController.text);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.updateName(_userNameController.text);
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
@@ -273,102 +376,221 @@ class EditProfileScreen extends StatelessWidget {
       lastDate: DateTime.now(),
     );
     if (picked != null && picked != viewModel.appUser.dob) {
-      viewModel.updateDob(picked);
+      viewModel.updateField('dob', picked);
     }
   }
 
   Future<void> _displayGenderDialog(
       BuildContext context, EditProfileViewModel viewModel) async {
-    TextEditingController _genderController = TextEditingController();
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Enter Gender'),
-          content: TextField(
-            controller: _genderController,
-            decoration: InputDecoration(hintText: 'Gender'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Select Gender',
+            ),
+            content: Container(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Choose how you identify',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  12.verticalSpace,
+                  ...viewModel.predefinedGenders.map((gender) {
+                    bool isSelected = viewModel.appUser.gender == gender;
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color:
+                              isSelected ? lightPinkColor : Colors.grey[300]!,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        color:
+                            isSelected ? lightPinkColor.withOpacity(0.1) : null,
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        title: Text(
+                          gender,
+                          style: TextStyle(
+                            color: isSelected ? lightPinkColor : Colors.black,
+                            fontWeight: isSelected
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: lightPinkColor)
+                            : null,
+                        onTap: () {
+                          viewModel.updateField('gender', gender);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.updateGender(_genderController.text);
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
   }
 
-  _displayRelationshipStatusDialog(
-      BuildContext context, EditProfileViewModel viewModel) {
-    TextEditingController _relationshipStatusController =
-        TextEditingController();
+  Future<void> _displayRelationshipStatusDialog(
+      BuildContext context, EditProfileViewModel viewModel) async {
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Enter Relationship Status'),
-          content: TextField(
-            controller: _relationshipStatusController,
-            decoration: InputDecoration(hintText: 'Relationship Status'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Relationship Status',
+              style: style17.copyWith(fontWeight: FontWeight.bold),
+            ),
+            content: Container(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select your current status',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  12.verticalSpace,
+                  ...viewModel.predefinedRelationshipStatus.map((status) {
+                    bool isSelected =
+                        viewModel.appUser.relationshipStatus == status;
+                    return Container(
+                      margin: EdgeInsets.only(bottom: 8.h),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color:
+                              isSelected ? lightPinkColor : Colors.grey[300]!,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        color:
+                            isSelected ? lightPinkColor.withOpacity(0.1) : null,
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        title: Text(
+                          status,
+                          style: TextStyle(
+                            color: isSelected ? lightPinkColor : Colors.black,
+                            fontWeight: isSelected
+                                ? FontWeight.w500
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(Icons.check_circle, color: lightPinkColor)
+                            : null,
+                        onTap: () {
+                          viewModel.updateField('relationshipStatus', status);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.updateRelationshipStatus(
-                    _relationshipStatusController.text);
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
   }
 
-  _displayHeightDialog(BuildContext context, EditProfileViewModel viewModel) {
-    TextEditingController _heightController = TextEditingController();
+  // Enhanced height dialog
+  Future<void> _displayHeightDialog(
+      BuildContext context, EditProfileViewModel viewModel) async {
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController _heightController =
+        TextEditingController(text: viewModel.appUser.height?.toString());
+
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Enter Height'),
-          content: TextField(
-            controller: _heightController,
-            decoration: InputDecoration(hintText: 'Height'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Your Height',
+            ),
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _heightController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Enter height in cm',
+                      suffixText: 'cm',
+                      prefixIcon: Icon(Icons.height),
+                    ),
+                    validator: viewModel.validateHeight,
+                    textInputAction: TextInputAction.done,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: Text('SAVE'),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    viewModel.updateField(
+                        'height', int.parse(_heightController.text));
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.updateHeight(int.parse(_heightController.text));
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
@@ -379,27 +601,31 @@ class EditProfileScreen extends StatelessWidget {
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Enter Weight'),
-          content: TextField(
-            controller: _weightController,
-            decoration: InputDecoration(hintText: 'Weight'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            title: Text('Enter Weight'),
+            content: TextField(
+              controller: _weightController,
+              decoration: InputDecoration(hintText: 'Weight'),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('CANCEL'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  viewModel.updateField(
+                      'weight', int.parse(_weightController.text));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.updateWeight(int.parse(_weightController.text));
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
@@ -411,27 +637,178 @@ class EditProfileScreen extends StatelessWidget {
     return showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Add Interest'),
-          content: TextField(
-            controller: _interestController,
-            decoration: InputDecoration(hintText: 'Interest'),
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            title: Text('Add Interest'),
+            content: TextField(
+              controller: _interestController,
+              decoration: InputDecoration(hintText: 'Interest'),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('CANCEL'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  viewModel.addInterest(_interestController.text);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('CANCEL'),
-              onPressed: () {
-                Navigator.pop(context);
+        );
+      },
+    );
+  }
+
+  // Enhanced about dialog
+  Future<void> _displayAboutDialog(
+      BuildContext context, EditProfileViewModel viewModel) async {
+    final TextEditingController _aboutController =
+        TextEditingController(text: viewModel.appUser.about);
+    final _formKey = GlobalKey<FormState>();
+
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'Tell us about yourself',
+            ),
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Share your interests, hobbies, or anything you\'d like others to know',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  12.verticalSpace,
+                  TextFormField(
+                    controller: _aboutController,
+                    maxLines: 5,
+                    maxLength: 500,
+                    decoration: InputDecoration(
+                      hintText: 'Write something about yourself...',
+                      alignLabelWithHint: true,
+                    ),
+                    validator: viewModel.validateAbout,
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: Text('SAVE'),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    viewModel.updateField('about', _aboutController.text);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Enhanced looking for dialog
+  Future<void> _displayLookingForDialog(
+      BuildContext context, EditProfileViewModel viewModel) async {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: Text(
+              'What are you looking for?',
+            ),
+            content: StatefulBuilder(
+              builder: (context, setState) {
+                return Container(
+                  width: double.maxFinite,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Select all that apply',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                      12.verticalSpace,
+                      ...viewModel.predefinedLookingFor.map((item) {
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: viewModel.appUser.lookingFor
+                                          ?.contains(item) ??
+                                      false
+                                  ? lightPinkColor
+                                  : Colors.grey[300]!,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListTile(
+                            title: Text(item),
+                            trailing: Icon(
+                              viewModel.appUser.lookingFor?.contains(item) ??
+                                      false
+                                  ? Icons.check_circle
+                                  : Icons.circle_outlined,
+                              color: viewModel.appUser.lookingFor
+                                          ?.contains(item) ??
+                                      false
+                                  ? lightPinkColor
+                                  : Colors.grey[400],
+                            ),
+                            onTap: () {
+                              viewModel.toggleLookingFor(item);
+                              setState(() {});
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                );
               },
             ),
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                viewModel.addInterest(_interestController.text);
-                Navigator.pop(context);
-              },
-            ),
-          ],
+            actions: <Widget>[
+              TextButton(
+                child: Text('DONE'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -653,6 +1030,86 @@ class EditProfileScreen extends StatelessWidget {
               },
             ),
           ],
+        );
+      },
+    );
+  }
+
+  // Add this method to show location options
+  void _showLocationOptions(
+      BuildContext context, EditProfileViewModel viewModel) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.my_location),
+                title: Text('Use current location'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await viewModel.updateLocation();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.search),
+                title: Text('Search location'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showSearchLocationDialog(context, viewModel);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Add this method to show search location dialog
+  void _showSearchLocationDialog(
+      BuildContext context, EditProfileViewModel viewModel) {
+    final TextEditingController _searchController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Theme(
+          data: _getDialogTheme(),
+          child: AlertDialog(
+            title: Text('Search Location'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter location',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text('CANCEL'),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: Text('SEARCH'),
+                onPressed: () async {
+                  if (_searchController.text.isNotEmpty) {
+                    Navigator.pop(context);
+                    await viewModel
+                        .updateCustomLocation(_searchController.text);
+                  }
+                },
+              ),
+            ],
+          ),
         );
       },
     );

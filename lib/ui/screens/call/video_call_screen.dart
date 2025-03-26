@@ -7,15 +7,18 @@ import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/models/call.dart';
-import 'package:code_structure/core/services/call_service.dart';
+import 'package:code_structure/core/repositories/call_repository.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 
 class VideoCallScreen extends StatefulWidget {
   final Call call;
+  final Function(Duration)? onCallEnd;
 
   const VideoCallScreen({
     super.key,
     required this.call,
+    this.onCallEnd,
   });
 
   @override
@@ -33,10 +36,72 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   bool _isMuted = false;
   bool _isCameraOff = false;
 
+  // Call duration tracking
+  DateTime? _callStartTime;
+  Duration _callDuration = Duration.zero;
+  Timer? _durationTimer;
+  Timer? _callTimeoutTimer;
+
+  // Call status handling
+  late Stream<Call?> _callStream;
+  StreamSubscription<Call?>? _callSubscription;
+  String _callStatus = 'pending';
+  bool _isCallAccepted = false;
+
   @override
   void initState() {
     super.initState();
+    _setupCallStatusListener();
     initAgora();
+    _startCallTimeout();
+  }
+
+  void _setupCallStatusListener() {
+    final callRepository = CallRepository();
+    _callStream = callRepository.getCallStream(widget.call.callId);
+    _callSubscription = _callStream.listen((call) {
+      if (mounted && call != null) {
+        setState(() {
+          _callStatus = call.status;
+          if (call.status == 'ongoing' && !_isCallAccepted) {
+            _isCallAccepted = true;
+            _startCallDurationTimer();
+            _callTimeoutTimer?.cancel();
+          } else if (call.status == 'ended' || call.status == 'rejected') {
+            _handleCallEnd();
+          }
+        });
+      }
+    });
+  }
+
+  void _startCallDurationTimer() {
+    _callStartTime = DateTime.now();
+    _durationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _callDuration = DateTime.now().difference(_callStartTime!);
+        });
+      }
+    });
+  }
+
+  void _startCallTimeout() {
+    _callTimeoutTimer = Timer(Duration(seconds: 30), () {
+      if (mounted && _callStatus == 'pending') {
+        _handleCallEnd();
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return duration.inHours > 0
+        ? '$hours:$minutes:$seconds'
+        : '$minutes:$seconds';
   }
 
   Future<void> initAgora() async {
@@ -85,7 +150,15 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   void _handleCallEnd() {
-    // context.read<CallService>().endCurrentCall();
+    // Stop the duration timer
+    _durationTimer?.cancel();
+
+    // Calculate final duration and call the callback
+    if (_callStartTime != null && widget.onCallEnd != null) {
+      final duration = DateTime.now().difference(_callStartTime!);
+      widget.onCallEnd!(duration);
+    }
+
     Navigator.pop(context);
   }
 
@@ -107,11 +180,31 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     _engine?.switchCamera();
   }
 
-  @override
-  void dispose() {
-    _engine?.leaveChannel();
-    _engine?.release();
-    super.dispose();
+  _buildStatus() {
+    String displayText = '';
+    switch (_callStatus) {
+      case 'ongoing':
+        displayText = _formatDuration(_callDuration);
+        break;
+      case 'pending':
+        displayText = 'Calling...';
+        break;
+      case 'ended':
+        displayText = 'Call Ended';
+        break;
+      case 'rejected':
+        displayText = 'Call Rejected';
+        break;
+      default:
+        displayText = _callStatus;
+    }
+
+    return Text(
+      displayText,
+      style: style14.copyWith(
+        color: subheadingColor2,
+      ),
+    );
   }
 
   @override
@@ -132,19 +225,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              '00:45',
-              style: style14.copyWith(
-                color: lightGreyColor,
-              ),
-            ),
+            _buildStatus(),
           ],
         ),
       ),
       body: Stack(
         children: [
           // Remote video view
-          _remoteUid != null
+          _remoteUid != null && _callStatus == 'ongoing'
               ? AgoraVideoView(
                   controller: VideoViewController.remote(
                     rtcEngine: _engine!,
@@ -162,37 +250,34 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   ),
                 ),
 
-          // Local video view
-          Positioned(
-            left: selfViewX,
-            top: selfViewY,
-            child: Draggable(
-              feedback: _buildLocalVideoView(),
-              childWhenDragging: Opacity(
-                opacity: 0.5,
+          // Local video view (only show if call is ongoing)
+          if (_callStatus == 'ongoing')
+            Positioned(
+              left: selfViewX,
+              top: selfViewY,
+              child: Draggable(
+                feedback: _buildLocalVideoView(),
+                childWhenDragging: Opacity(
+                  opacity: 0.5,
+                  child: _buildLocalVideoView(),
+                ),
                 child: _buildLocalVideoView(),
+                onDragEnd: (details) {
+                  setState(() {
+                    final screenSize = MediaQuery.of(context).size;
+                    final selfViewSize = Size(100.w, 150.h);
+                    selfViewX = details.offset.dx.clamp(
+                      0,
+                      screenSize.width - selfViewSize.width,
+                    );
+                    selfViewY = details.offset.dy.clamp(
+                      kToolbarHeight - 50.h,
+                      screenSize.height - selfViewSize.height - 100.h,
+                    );
+                  });
+                },
               ),
-              child: _buildLocalVideoView(),
-              onDragEnd: (details) {
-                setState(() {
-                  // Calculate new position within screen bounds
-                  final screenSize = MediaQuery.of(context).size;
-                  final selfViewSize = Size(100.w, 150.h);
-
-                  selfViewX = details.offset.dx.clamp(
-                    0,
-                    screenSize.width - selfViewSize.width,
-                  );
-                  selfViewY = details.offset.dy.clamp(
-                    kToolbarHeight - 50.h, // Account for AppBar
-                    screenSize.height -
-                        selfViewSize.height -
-                        100.h, // Account for bottom controls
-                  );
-                });
-              },
             ),
-          ),
 
           // Bottom controls
           Positioned(
@@ -202,26 +287,29 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildCallControlButton(
-                  icon: _isMuted ? Icons.mic : Icons.mic_off,
-                  color: PrimarybuttonColor,
-                  onPressed: _toggleMute,
-                ),
-                _buildCallControlButton(
-                  icon: _isCameraOff ? Icons.videocam : Icons.videocam_off,
-                  color: PrimarybuttonColor,
-                  onPressed: _toggleCamera,
-                ),
+                if (_callStatus == 'ongoing') ...[
+                  _buildCallControlButton(
+                    icon: _isMuted ? Icons.mic : Icons.mic_off,
+                    color: PrimarybuttonColor,
+                    onPressed: _toggleMute,
+                  ),
+                  _buildCallControlButton(
+                    icon: _isCameraOff ? Icons.videocam : Icons.videocam_off,
+                    color: PrimarybuttonColor,
+                    onPressed: _toggleCamera,
+                  ),
+                ],
                 _buildCallControlButton(
                   icon: Icons.call_end,
                   color: SecondarybuttonColor,
                   onPressed: _handleCallEnd,
                 ),
-                _buildCallControlButton(
-                  icon: Icons.flip_camera_ios,
-                  color: PrimarybuttonColor,
-                  onPressed: _switchCamera,
-                ),
+                if (_callStatus == 'ongoing')
+                  _buildCallControlButton(
+                    icon: Icons.flip_camera_ios,
+                    color: PrimarybuttonColor,
+                    onPressed: _switchCamera,
+                  ),
               ],
             ),
           ),
@@ -287,5 +375,15 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _callSubscription?.cancel();
+    _durationTimer?.cancel();
+    _callTimeoutTimer?.cancel();
+    _engine?.leaveChannel();
+    _engine?.release();
+    super.dispose();
   }
 }

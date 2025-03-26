@@ -2,6 +2,7 @@ import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/model/app_user.dart';
+import 'package:code_structure/core/services/call_service.dart';
 import 'package:code_structure/core/services/database_services.dart';
 import 'package:code_structure/ui/screens/call/audio_call_screen.dart';
 import 'package:code_structure/ui/screens/call/video_call_screen.dart';
@@ -62,6 +63,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   // Map to track messages that are currently being sent
   final Map<String, bool> _sendingMessages = {};
+  bool _isShowingParticipants = false;
 
   @override
   void dispose() {
@@ -253,87 +255,27 @@ class _ChatScreenState extends State<ChatScreen> {
         centerTitle: false,
         backgroundColor: Color(0xFFF8F8F8).withAlpha(200),
         leadingWidth: 40.w,
-        title: widget.otherUserId != null
-            ? StreamBuilder<AppUser?>(
-                stream: _databaseService.userStream(widget.otherUserId!),
-                builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) {
-                    return const SizedBox.shrink();
-                  }
-
-                  final otherUser = userSnapshot.data!;
-                  return Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20.r,
-                        backgroundImage: otherUser.images![0] != null
-                            ? NetworkImage(otherUser.images![0]!)
-                            : AssetImage(AppAssets().pic) as ImageProvider,
-                      ),
-                      SizedBox(width: 10.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.title,
-                              style: style17.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
-                              ),
-                            ),
-                            Text(
-                              (otherUser.isOnline ?? false)
-                                  ? 'Online'
-                                  : timeago.format(otherUser.lastOnline!),
-                              style: style14.copyWith(
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                })
-            : Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20.r,
-                    backgroundImage: AssetImage(AppAssets().pic),
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: style17.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        title: widget.isGroup ? _buildGroupHeader() : _buildUserHeader(),
         actions: [
-          IconButton(
-            onPressed: () {
-              _checkAndStartCall(context, 'audio');
-            },
-            icon: Icon(Icons.call, color: lightOrangeColor),
-          ),
-          IconButton(
-            onPressed: () {
-              _checkAndStartCall(context, 'video');
-            },
-            icon: Icon(Icons.videocam, color: lightOrangeColor),
-          ),
+          if (widget.isGroup)
+            IconButton(
+              onPressed: _showGroupOptions,
+              icon: Icon(Icons.group, color: lightOrangeColor),
+            ),
+          if (!widget.isGroup)
+            IconButton(
+              onPressed: () {
+                _checkAndStartCall(context, 'audio');
+              },
+              icon: Icon(Icons.call, color: lightOrangeColor),
+            ),
+          if (!widget.isGroup)
+            IconButton(
+              onPressed: () {
+                _checkAndStartCall(context, 'video');
+              },
+              icon: Icon(Icons.videocam, color: lightOrangeColor),
+            ),
           IconButton(
             onPressed: () {},
             icon: Icon(Icons.more_vert, color: Colors.black),
@@ -915,28 +857,64 @@ class _ChatScreenState extends State<ChatScreen> {
     final callMinutesProvider =
         Provider.of<CallMinutesProvider>(context, listen: false);
 
-    // Default call duration to check (10 minutes)
-    const int defaultCallDuration = 10;
-
-    // Check if user has enough minutes
-    final hasEnoughMinutes = await callMinutesProvider.hasEnoughMinutes(
-        callType, defaultCallDuration);
+    // Check if user has enough minutes (minimum 1 minute required)
+    final hasEnoughMinutes =
+        await callMinutesProvider.hasEnoughMinutes(callType, 1);
 
     if (hasEnoughMinutes) {
       // User has enough minutes, proceed with the call
-      context.read<CallProvider>().startCall(
-            callerId: widget.currentUserId,
-            callerName: widget.title,
-            receiverId: widget.otherUserId!,
-            receiverName: widget.title,
-            receiverFcmToken: widget.otherUserfcm ?? '',
-            callType: callType,
-          );
+      final callProvider = context.read<CallProvider>();
+      await callProvider.startCall(
+        callerId: widget.currentUserId,
+        callerName: widget.title,
+        receiverId: widget.otherUserId!,
+        receiverName: widget.title,
+        receiverFcmToken: widget.otherUserfcm ?? '',
+        callType: callType,
+      );
 
-      // Record that minutes will be used
-      // This will be confirmed when the call ends with actual duration
-      await callMinutesProvider.recordUsedMinutes(
-          callType, defaultCallDuration);
+      // Get the current call from the provider
+      final call = callProvider.currentCall;
+      if (call != null) {
+        // Navigate to the appropriate call screen based on call type
+        if (callType == 'video') {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VideoCallScreen(
+                call: call,
+                onCallEnd: (duration) async {
+                  // Record the actual minutes used when call ends
+                  final minutesUsed = (duration.inSeconds / 60).ceil();
+                  await callMinutesProvider.recordUsedMinutes(
+                    callType,
+                    minutesUsed,
+                  );
+                  context.read<CallService>().endCall(call.callId);
+                },
+              ),
+            ),
+          );
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AudioCallScreen(
+                call: call,
+                onCallEnd: (duration) async {
+                  // Record the actual minutes used when call ends
+                  final minutesUsed = (duration.inSeconds / 60).ceil();
+                  await callMinutesProvider.recordUsedMinutes(
+                    callType,
+                    minutesUsed,
+                  );
+                  context.read<CallService>().endCall(call.callId);
+                },
+              ),
+            ),
+          );
+        }
+      }
     } else {
       // User doesn't have enough minutes, show purchase dialog
       _showPurchaseDialog(context, callType);
@@ -972,6 +950,275 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Text('Buy Minutes'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUserHeader() {
+    return widget.otherUserId != null
+        ? StreamBuilder<AppUser?>(
+            stream: _databaseService.userStream(widget.otherUserId!),
+            builder: (context, userSnapshot) {
+              if (!userSnapshot.hasData) {
+                return const SizedBox.shrink();
+              }
+
+              final otherUser = userSnapshot.data!;
+              return Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20.r,
+                    backgroundImage: otherUser.images![0] != null
+                        ? NetworkImage(otherUser.images![0]!)
+                        : AssetImage(AppAssets().pic) as ImageProvider,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: style17.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          (otherUser.isOnline ?? false)
+                              ? 'Online'
+                              : timeago.format(otherUser.lastOnline!),
+                          style: style14.copyWith(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            })
+        : Row(
+            children: [
+              CircleAvatar(
+                radius: 20.r,
+                backgroundImage: widget.imageUrl != null
+                    ? NetworkImage(widget.imageUrl!)
+                    : AssetImage(AppAssets().pic) as ImageProvider,
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: style17.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+  }
+
+  Widget _buildGroupHeader() {
+    return StreamBuilder<List<AppUser>>(
+      stream: _chatService.getGroupParticipants(widget.chatId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final participants = snapshot.data!;
+        return Row(
+          children: [
+            CircleAvatar(
+              radius: 20.r,
+              backgroundImage: widget.imageUrl != null
+                  ? NetworkImage(widget.imageUrl!)
+                  : AssetImage(AppAssets().pic) as ImageProvider,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.title,
+                    style: style17.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    '${participants.length} participants',
+                    style: style14.copyWith(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showGroupOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => StreamBuilder<List<AppUser>>(
+        stream: _chatService.getGroupParticipants(widget.chatId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final participants = snapshot.data!;
+          return Container(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Group Participants',
+                  style: style17.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: participants.length,
+                    itemBuilder: (context, index) {
+                      final user = participants[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: user.images?[0] != null
+                              ? NetworkImage(user.images![0]!)
+                              : AssetImage(AppAssets().pic) as ImageProvider,
+                        ),
+                        title: Text(user.userName ?? 'Unknown'),
+                        trailing: user.uid != widget.currentUserId
+                            ? IconButton(
+                                icon: Icon(Icons.remove_circle_outline),
+                                onPressed: () async {
+                                  try {
+                                    await _chatService.removeGroupParticipant(
+                                      widget.chatId,
+                                      user.uid!,
+                                    );
+                                    Navigator.pop(context);
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Error removing participant: $e')),
+                                    );
+                                  }
+                                },
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => _showAddParticipantsDialog(context),
+                  child: Text('Add Participants'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAddParticipantsDialog(BuildContext context) {
+    List<String> selectedUsers = [];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Add Participants'),
+          content: Container(
+            width: double.maxFinite,
+            height: 300.h,
+            child: StreamBuilder<List<AppUser>?>(
+              stream: _databaseService.allUsersStream(widget.currentUserId),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final users = snapshot.data!;
+                return ListView.builder(
+                  itemCount: users.length,
+                  itemBuilder: (context, index) {
+                    final user = users[index];
+                    final isSelected = selectedUsers.contains(user.uid);
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: user.images?[0] != null
+                            ? NetworkImage(user.images![0]!)
+                            : AssetImage(AppAssets().pic) as ImageProvider,
+                      ),
+                      title: Text(user.userName ?? 'Unknown'),
+                      trailing: Checkbox(
+                        value: isSelected,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedUsers.add(user.uid!);
+                            } else {
+                              selectedUsers.remove(user.uid!);
+                            }
+                          });
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (selectedUsers.isEmpty) {
+                  return;
+                }
+
+                try {
+                  await _chatService.addGroupParticipants(
+                    widget.chatId,
+                    selectedUsers,
+                  );
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error adding participants: $e')),
+                  );
+                }
+              },
+              child: Text('Add'),
+            ),
+          ],
+        ),
       ),
     );
   }

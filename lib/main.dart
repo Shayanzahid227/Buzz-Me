@@ -46,21 +46,32 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final OnlineStatusService _onlineStatusService = OnlineStatusService();
-  // late CallService _callService;
+  late CallService _callService;
 
   @override
   void initState() {
     super.initState();
     _onlineStatusService.initialize();
-    // _callService = CallService(navigatorKey: navigatorKey);
+    _callService = CallService(navigatorKey: navigatorKey);
+    _callService.initialize();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
     _onlineStatusService.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Check for active calls when app is resumed from background
+      _callService.checkAndNavigateToCallScreen();
+    }
   }
 
   // This widget is the root of your application.
@@ -78,10 +89,10 @@ class _MyAppState extends State<MyApp> {
           ),
           ChangeNotifierProvider(
             create: (context) => UserProvider(),
-            lazy: false,
+            lazy: true,
           ),
           ChangeNotifierProvider(
-            create: (context) => CallProvider(),
+            create: (context) => CallProvider(_callService),
             lazy: false,
           ),
           ChangeNotifierProvider(

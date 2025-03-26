@@ -3,6 +3,7 @@ import 'package:code_structure/core/constants/collection_identifiers.dart';
 import 'package:code_structure/core/model/chat.dart';
 import 'package:code_structure/core/model/message.dart';
 import 'package:uuid/uuid.dart';
+import 'package:code_structure/core/model/app_user.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -59,6 +60,7 @@ class ChatService {
   // Send a message
   Future<void> sendMessage(Message message, String chatId) async {
     try {
+      // Send the message
       await _firestore
           .collection(ChatCollection)
           .doc(chatId)
@@ -67,12 +69,18 @@ class ChatService {
           .set(message.toJson());
 
       // Update last message in chat
-      await _firestore.collection(ChatCollection).doc(chatId).update({
+      final chatUpdate = {
         'lastMessage': message.content,
         'lastMessageType': message.type.toString(),
         'lastMessageTime': message.timestamp,
         'lastMessageSenderId': message.senderId,
-      });
+        // 'unreadCount': FieldValue.increment(1),
+      };
+
+      await _firestore
+          .collection(ChatCollection)
+          .doc(chatId)
+          .update(chatUpdate);
     } catch (e) {
       print('Error sending message: $e');
       throw Exception('Failed to send message');
@@ -120,5 +128,68 @@ class ChatService {
       print('Error deleting message: $e');
       throw Exception('Failed to delete message');
     }
+  }
+
+  // Add new methods for group chat functionality
+  Future<void> updateGroupInfo(String chatId,
+      {String? groupName, String? groupImage}) async {
+    try {
+      final Map<String, dynamic> updates = {};
+      if (groupName != null) updates['groupName'] = groupName;
+      if (groupImage != null) updates['groupImage'] = groupImage;
+
+      await _firestore.collection(ChatCollection).doc(chatId).update(updates);
+    } catch (e) {
+      print('Error updating group info: $e');
+      throw Exception('Failed to update group info');
+    }
+  }
+
+  Future<void> addGroupParticipants(
+      String chatId, List<String> newParticipants) async {
+    try {
+      await _firestore.collection(ChatCollection).doc(chatId).update({
+        'participants': FieldValue.arrayUnion(newParticipants),
+      });
+    } catch (e) {
+      print('Error adding participants: $e');
+      throw Exception('Failed to add participants');
+    }
+  }
+
+  Future<void> removeGroupParticipant(
+      String chatId, String participantId) async {
+    try {
+      await _firestore.collection(ChatCollection).doc(chatId).update({
+        'participants': FieldValue.arrayRemove([participantId]),
+      });
+    } catch (e) {
+      print('Error removing participant: $e');
+      throw Exception('Failed to remove participant');
+    }
+  }
+
+  // Get group participants with their user info
+  Stream<List<AppUser>> getGroupParticipants(String chatId) {
+    return _firestore
+        .collection(ChatCollection)
+        .doc(chatId)
+        .snapshots()
+        .asyncMap((chatDoc) async {
+      if (!chatDoc.exists) return [];
+
+      final chat = Chat.fromJson(chatDoc.data()! as Map<String, dynamic>);
+      final List<AppUser> participants = [];
+
+      for (String userId in chat.participants) {
+        final userDoc =
+            await _firestore.collection('AppUsers').doc(userId).get();
+        if (userDoc.exists) {
+          participants.add(AppUser.fromJson(userDoc.data()!));
+        }
+      }
+
+      return participants;
+    });
   }
 }

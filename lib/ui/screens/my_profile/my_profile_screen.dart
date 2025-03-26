@@ -2,10 +2,14 @@ import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
 import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/ui/screens/edit_profile/edit_profile_screen.dart';
+import 'package:code_structure/ui/screens/free_vip/free_vip.dart';
 import 'package:code_structure/ui/screens/wallet/wallet_home/wallet_home_screen.dart';
+import 'package:code_structure/ui/screens/likes_visits/likes_screen.dart';
+import 'package:code_structure/ui/screens/likes_visits/visits_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:code_structure/custom_widgets/vip_feature_wrapper.dart';
 
 class MyProfileScreen extends StatelessWidget {
   const MyProfileScreen({Key? key}) : super(key: key);
@@ -87,33 +91,35 @@ class MyProfileScreen extends StatelessWidget {
                                                   BorderRadius.circular(50.r),
                                             ),
                                           ),
-                                          Positioned(
-                                            right: 0,
-                                            bottom: 0,
-                                            child: Container(
-                                              width: 25.w,
-                                              height: 25.h,
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  colors: [
-                                                    lightOrangeColor,
-                                                    lightPinkColor,
-                                                  ],
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(50.r),
-                                                border: Border.all(
-                                                  color: Colors.white,
-                                                  width: 2.w,
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                Icons.cabin,
-                                                color: Colors.white,
-                                                size: 16,
-                                              ),
-                                            ),
-                                          ),
+                                          // if (userProvider.user.isVip ?? false)
+                                          //   Positioned(
+                                          //     right: 0,
+                                          //     bottom: 0,
+                                          //     child: Container(
+                                          //       width: 25.w,
+                                          //       height: 25.h,
+                                          //       padding: EdgeInsets.all(3),
+                                          //       decoration: BoxDecoration(
+                                          //         gradient: LinearGradient(
+                                          //           colors: [
+                                          //             lightOrangeColor,
+                                          //             lightPinkColor,
+                                          //           ],
+                                          //         ),
+                                          //         borderRadius:
+                                          //             BorderRadius.circular(
+                                          //                 50.r),
+                                          //         border: Border.all(
+                                          //           color: Colors.white,
+                                          //           width: 2.w,
+                                          //         ),
+                                          //       ),
+                                          //       child: Image.asset(
+                                          //         AppAssets().crown,
+                                          //         scale: 4,
+                                          //       ),
+                                          //     ),
+                                          //   ),
                                         ],
                                       ),
                                       const SizedBox(width: 16),
@@ -213,10 +219,36 @@ class MyProfileScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            _buildMenuItem(Icons.favorite, 'Likes', Colors.red),
+                            _buildMenuItem(Icons.favorite, 'Likes', Colors.red,
+                                onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      // VipFeatureWrapper(
+                                      //   feature: 'see_likes',
+                                      //   child:
+                                      LikesScreen(),
+                                  // ),
+                                ),
+                              );
+                            }),
                             _buildDivider(),
                             _buildMenuItem(
-                                Icons.location_on, 'Visits', Colors.green),
+                                Icons.location_on, 'Visits', Colors.green,
+                                onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      // VipFeatureWrapper(
+                                      //   feature: 'see_visits',
+                                      //   child:
+                                      VisitsScreen(),
+                                  // ),
+                                ),
+                              );
+                            }),
                             _buildDivider(),
                             _buildMenuItem(
                                 Icons.group, 'Groups', Colors.purple),
@@ -255,8 +287,19 @@ class MyProfileScreen extends StatelessWidget {
                               },
                             ),
                             _buildDivider(),
-                            _buildMenuItem(
-                                Icons.verified_user, 'VIP center', Colors.blue),
+                            // _buildMenuItem(
+                            //   Icons.verified_user,
+                            //   'VIP center',
+                            //   Colors.blue,
+                            //   onTap: () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => FreeVIPScreen(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
                             _buildDivider(),
                             _buildMenuItem(Icons.person_add, 'Find friends',
                                 Colors.lightGreen),

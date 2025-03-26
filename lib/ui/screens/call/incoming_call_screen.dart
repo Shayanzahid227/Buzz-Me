@@ -1,3 +1,4 @@
+import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:code_structure/core/constants/colors.dart';
@@ -7,6 +8,7 @@ import 'package:code_structure/core/services/call_service.dart';
 import 'package:code_structure/ui/screens/call/audio_call_screen.dart';
 import 'package:code_structure/ui/screens/call/video_call_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_callkeep/flutter_callkeep.dart';
 
 class IncomingCallScreen extends StatelessWidget {
   final Call call;
@@ -18,28 +20,20 @@ class IncomingCallScreen extends StatelessWidget {
 
   void _handleAcceptCall(BuildContext context) {
     // Update call status to ongoing
-    // context.read<CallService>().endCurrentCall();
-
-    // Navigate to appropriate call screen
-    if (call.callType == 'video') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => VideoCallScreen(call: call),
-        ),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AudioCallScreen(call: call),
-        ),
-      );
-    }
+    context.read<CallService>().handleAnswerCall(CallEvent(
+          uuid: call.callId,
+          callerName: call.callerName,
+          handle: call.callerId,
+          hasVideo: call.callType == 'video',
+          extra: <String, dynamic>{
+            'callerId': call.callerId,
+            'callType': call.callType,
+          },
+        ));
   }
 
   void _handleRejectCall(BuildContext context) {
-    // context.read<CallService>().rejectCurrentCall();
+    context.read<CallService>().rejectCurrentCall();
     Navigator.pop(context);
   }
 
@@ -56,7 +50,7 @@ class IncomingCallScreen extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 100.r,
-                    backgroundImage: AssetImage(call.callerName),
+                    backgroundImage: AssetImage(AppAssets().pic),
                   ),
                   SizedBox(height: 24.h),
                   Text(

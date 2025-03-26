@@ -22,6 +22,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:get_thumbnail_video/index.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:code_structure/core/models/call.dart';
+import 'package:code_structure/core/repositories/call_repository.dart';
 
 class InboxScreen extends StatefulWidget {
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
@@ -352,41 +354,56 @@ class _InboxScreenState extends State<InboxScreen>
   }
 
   Widget _buildGroupsTab() {
-    return Column(
+    return Stack(
       children: [
-        _buildSearchBar('Search groups...'),
-        Divider(color: Color(0xFFDAD9E2)),
-        Expanded(
-          child: StreamBuilder<List<Chat>>(
-            stream: _chatService.getUserChats(widget.currentUserId),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
+        Column(
+          children: [
+            _buildSearchBar('Search groups...'),
+            Divider(color: Color(0xFFDAD9E2)),
+            Expanded(
+              child: StreamBuilder<List<Chat>>(
+                stream: _chatService.getUserChats(widget.currentUserId),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
 
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-              final groups = snapshot.data!
-                  .where((chat) => chat.isGroup)
-                  .where((chat) =>
-                      chat.groupName?.toLowerCase().contains(_searchQuery) ??
-                      false)
-                  .toList();
+                  final groups = snapshot.data!
+                      .where((chat) => chat.isGroup)
+                      .where((chat) =>
+                          chat.groupName
+                              ?.toLowerCase()
+                              .contains(_searchQuery) ??
+                          false)
+                      .toList();
 
-              if (groups.isEmpty) {
-                return const Center(child: Text('No groups found'));
-              }
+                  if (groups.isEmpty) {
+                    return const Center(child: Text('No groups found'));
+                  }
 
-              return ListView.builder(
-                itemCount: groups.length,
-                itemBuilder: (context, index) {
-                  final group = groups[index];
-                  return _buildGroupListTile(group);
+                  return ListView.builder(
+                    itemCount: groups.length,
+                    itemBuilder: (context, index) {
+                      final group = groups[index];
+                      return _buildGroupListTile(group);
+                    },
+                  );
                 },
-              );
-            },
+              ),
+            ),
+          ],
+        ),
+        Positioned(
+          bottom: 16.h,
+          right: 16.w,
+          child: FloatingActionButton(
+            onPressed: () => _showCreateGroupDialog(context),
+            backgroundColor: lightPinkColor,
+            child: Icon(Icons.group_add, color: Colors.white),
           ),
         ),
       ],
@@ -462,6 +479,126 @@ class _InboxScreenState extends State<InboxScreen>
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _showCreateGroupDialog(BuildContext context) {
+    final TextEditingController groupNameController = TextEditingController();
+    List<String> selectedUsers = [];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Create Group'),
+          content: Container(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: groupNameController,
+                  decoration: InputDecoration(
+                    hintText: 'Group Name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16.h),
+                Container(
+                  height: 300.h,
+                  child: StreamBuilder<List<AppUser>?>(
+                    stream:
+                        _databaseServices.allUsersStream(widget.currentUserId),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      final users = snapshot.data!;
+                      return ListView.builder(
+                        itemCount: users.length,
+                        itemBuilder: (context, index) {
+                          final user = users[index];
+                          final isSelected = selectedUsers.contains(user.uid);
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: user.images?[0] != null
+                                  ? NetworkImage(user.images![0]!)
+                                  : AssetImage(AppAssets().pic)
+                                      as ImageProvider,
+                            ),
+                            title: Text(user.userName ?? 'Unknown'),
+                            trailing: Checkbox(
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedUsers.add(user.uid!);
+                                  } else {
+                                    selectedUsers.remove(user.uid!);
+                                  }
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (groupNameController.text.isEmpty || selectedUsers.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fill all fields')),
+                  );
+                  return;
+                }
+
+                // Add current user to participants
+                selectedUsers.add(widget.currentUserId);
+
+                try {
+                  final chatId = await _chatService.createOrGetChat(
+                    selectedUsers,
+                    isGroup: true,
+                    groupName: groupNameController.text,
+                  );
+
+                  Navigator.pop(context);
+
+                  // Navigate to the group chat
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        chatId: chatId,
+                        currentUserId: widget.currentUserId,
+                        isGroup: true,
+                        title: groupNameController.text,
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error creating group: $e')),
+                  );
+                }
+              },
+              child: Text('Create'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -692,6 +829,8 @@ class _InboxScreenState extends State<InboxScreen>
   }
 
   Widget _buildCallsTab() {
+    final CallRepository _callRepository = CallRepository();
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -711,50 +850,124 @@ class _InboxScreenState extends State<InboxScreen>
             ),
           ),
           10.verticalSpace,
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
-            child: Column(
-              children: List.generate(
-                6,
-                (index) {
-                  bool isIncoming = index % 2 == 0;
-                  bool isMissed = index % 3 == 0;
+          StreamBuilder<List<Call>>(
+            stream: _callRepository.getCallHistory(widget.currentUserId),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                    child: Text('Error loading calls: ${snapshot.error}'));
+              }
 
-                  return _buildListTile(
-                    'Contact ${index + 1}',
-                    '${isIncoming ? 'Incoming' : 'Outgoing'} ${isMissed ? '(Missed)' : ''}',
-                    '${index + 1}h ago',
-                    leading: CircleAvatar(
-                      radius: 30.r,
-                      backgroundColor: Colors.grey,
-                      backgroundImage: AssetImage(AppAssets().pic),
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              final calls = snapshot.data!;
+              if (calls.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 32.h),
+                    child: Text(
+                      'No call history',
+                      style: style17.copyWith(color: Colors.grey),
                     ),
-                    subtitleWidget: Row(
-                      children: [
-                        Icon(
-                          isIncoming ? Icons.call_received : Icons.call_made,
-                          size: 16.r,
-                          color: isMissed ? Colors.red : Colors.green,
-                        ),
-                        5.horizontalSpace,
-                        Text(
-                          '${isIncoming ? 'Incoming' : 'Outgoing'} ${isMissed ? '(Missed)' : ''}',
-                          style: TextStyle(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFC1C0C9),
+                  ),
+                );
+              }
+
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: calls.length,
+                  itemBuilder: (context, index) {
+                    final call = calls[index];
+                    final isIncoming = call.receiverId == widget.currentUserId;
+                    final otherUserId =
+                        isIncoming ? call.callerId : call.receiverName;
+                    final otherUserName =
+                        isIncoming ? call.callerName : call.receiverName;
+                    final isMissed = call.status == 'rejected' ||
+                        (call.status == 'ended' &&
+                            _callRepository.getCallDuration(call).inSeconds <
+                                5);
+
+                    return StreamBuilder<AppUser?>(
+                      stream: _databaseServices.userStream(otherUserId),
+                      builder: (context, userSnapshot) {
+                        final user = userSnapshot.data;
+
+                        return _buildListTile(
+                          otherUserName,
+                          '${isIncoming ? 'Incoming' : 'Outgoing'} ${call.callType} call ${isMissed ? '(Missed)' : ''}',
+                          timeago.format(call.createdAt),
+                          leading: CircleAvatar(
+                            radius: 30.r,
+                            backgroundImage: user?.images?[0] != null
+                                ? NetworkImage(user!.images![0]!)
+                                : AssetImage(AppAssets().pic) as ImageProvider,
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+                          subtitleWidget: Row(
+                            children: [
+                              Icon(
+                                isIncoming
+                                    ? Icons.call_received
+                                    : Icons.call_made,
+                                size: 16.r,
+                                color: isMissed ? Colors.red : Colors.green,
+                              ),
+                              5.horizontalSpace,
+                              Icon(
+                                call.callType == 'video'
+                                    ? Icons.videocam
+                                    : Icons.phone,
+                                size: 16.r,
+                                color: Color(0xFFC1C0C9),
+                              ),
+                              5.horizontalSpace,
+                              Text(
+                                '${isIncoming ? 'Incoming' : 'Outgoing'} ${isMissed ? '(Missed)' : ''}',
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xFFC1C0C9),
+                                ),
+                              ),
+                              if (call.status == 'ended' && !isMissed) ...[
+                                5.horizontalSpace,
+                                Text(
+                                  '(${_formatDuration(_callRepository.getCallDuration(call))})',
+                                  style: TextStyle(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFFC1C0C9),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    String hours = twoDigits(duration.inHours);
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return duration.inHours > 0
+        ? '$hours:$minutes:$seconds'
+        : '$minutes:$seconds';
   }
 }
 
