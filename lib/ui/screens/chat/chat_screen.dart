@@ -27,6 +27,7 @@ import 'package:open_file/open_file.dart';
 import 'package:code_structure/ui/screens/video_player_screen.dart';
 import 'package:code_structure/core/providers/call_minutes_provider.dart';
 import 'package:code_structure/ui/screens/checkout/cart_screen.dart';
+import 'dart:async';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -60,38 +61,77 @@ class _ChatScreenState extends State<ChatScreen> {
   final AudioRecorder _audioRecorder = AudioRecorder();
   bool _isRecording = false;
   String? _recordingPath;
+  Duration _recordingDuration = Duration.zero;
+  Timer? _recordingTimer;
   final ImagePicker _imagePicker = ImagePicker();
   // Map to track messages that are currently being sent
   final Map<String, bool> _sendingMessages = {};
   bool _isShowingParticipants = false;
 
   @override
+  void initState() {
+    super.initState();
+    _markMessagesAsRead();
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    try {
+      await _chatService.markMessagesAsRead(
+          widget.chatId, widget.currentUserId);
+    } catch (e) {
+      print('Error marking messages as read: $e');
+    }
+  }
+
+  void _startRecordingTimer() {
+    _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _recordingDuration += Duration(seconds: 1);
+      });
+    });
+  }
+
+  void _stopRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+  }
+
+  @override
   void dispose() {
     _messageController.dispose();
     _audioRecorder.dispose();
+    _stopRecordingTimer();
     super.dispose();
   }
 
   Future<void> _sendMessage(String content, MessageType type,
       {String? filePath}) async {
+    _messageController.clear();
     if (content.isEmpty && type == MessageType.text) return;
 
-    final messageId = const Uuid().v4();
-    final message = Message(
-      id: messageId,
-      senderId: widget.currentUserId,
-      content: content,
-      type: type,
-      timestamp: DateTime.now(),
-      filePath: filePath,
-    );
-
-    // Set the message as "sending"
-    setState(() {
-      _sendingMessages[messageId] = true;
-    });
-
+    String messageId = const Uuid().v4();
     try {
+      // Get current user's information
+      final currentUser = await _databaseService.getUser(widget.currentUserId);
+      if (currentUser == null) {
+        throw Exception('Current user not found');
+      }
+
+      final message = Message(
+        id: messageId,
+        senderId: widget.currentUserId,
+        senderName: currentUser.userName ?? 'Unknown User',
+        content: content,
+        type: type,
+        timestamp: DateTime.now(),
+        filePath: filePath,
+      );
+
+      // Set the message as "sending"
+      setState(() {
+        _sendingMessages[messageId] = true;
+      });
+
       await _chatService.sendMessage(message, widget.chatId);
       // Message sent successfully
     } catch (e) {
@@ -106,8 +146,6 @@ class _ChatScreenState extends State<ChatScreen> {
         _sendingMessages.remove(messageId);
       });
     }
-
-    _messageController.clear();
   }
 
   Future<void> _handleCameraSelection() async {
@@ -207,7 +245,11 @@ class _ChatScreenState extends State<ChatScreen> {
         final directory = await getTemporaryDirectory();
         _recordingPath = '${directory.path}/audio_message.m4a';
         await _audioRecorder.start(RecordConfig(), path: _recordingPath ?? '');
-        setState(() => _isRecording = true);
+        setState(() {
+          _isRecording = true;
+          _recordingDuration = Duration.zero;
+        });
+        _startRecordingTimer();
       }
     } catch (e) {
       print('Error starting recording: $e');
@@ -216,9 +258,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _stopRecording() async {
     try {
+      _stopRecordingTimer();
       final path = await _audioRecorder.stop();
       setState(() => _isRecording = false);
-      if (path != null) {
+
+      if (path != null && _recordingDuration.inSeconds >= 1) {
         // Create a temporary message ID
         final messageId = const Uuid().v4();
 
@@ -229,7 +273,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
         try {
           final String url =
-              await _storageService.uploadAudio(File(path), widget.chatId);
+              await _storageService.uploadAudio(File(path!), widget.chatId);
           await _sendMessage(url, MessageType.audio);
         } catch (e) {
           print('Error uploading audio: $e');
@@ -242,7 +286,12 @@ class _ChatScreenState extends State<ChatScreen> {
             _sendingMessages.remove(messageId);
           });
         }
+      } else if (_recordingDuration.inSeconds < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Recording too short. Please hold longer.')),
+        );
       }
+      _recordingDuration = Duration.zero;
     } catch (e) {
       print('Error stopping recording: $e');
     }
@@ -336,74 +385,106 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    height: 50.h,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(25.r),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(width: 12.w),
-                        Icon(
-                          Icons.emoji_emotions_outlined,
-                          color: Colors.grey,
-                          size: 24.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            onChanged: (value) {
-                              setState(
-                                  () {}); // Trigger rebuild to update button
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Type a Message...',
-                              hintStyle: style14.copyWith(
-                                color: Colors.grey,
+                  child: _isRecording
+                      ? Container(
+                          height: 50.h,
+                          decoration: BoxDecoration(
+                            color: Colors.red[100],
+                            borderRadius: BorderRadius.circular(25.r),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 12.w,
+                                height: 12.h,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              border: InputBorder.none,
-                              contentPadding:
-                                  EdgeInsets.symmetric(vertical: 10.h),
-                            ),
+                              SizedBox(width: 8.w),
+                              Text(
+                                'Recording ${_recordingDuration.inSeconds}s',
+                                style: style14.copyWith(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          height: 50.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(25.r),
+                          ),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 12.w),
+                              Icon(
+                                Icons.emoji_emotions_outlined,
+                                color: Colors.grey,
+                                size: 24.sp,
+                              ),
+                              SizedBox(width: 8.w),
+                              Expanded(
+                                child: TextField(
+                                  controller: _messageController,
+                                  onChanged: (value) {
+                                    setState(
+                                        () {}); // Trigger rebuild to update button
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Type a Message...',
+                                    hintStyle: style14.copyWith(
+                                      color: Colors.grey,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding:
+                                        EdgeInsets.symmetric(vertical: 10.h),
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  _showAttachmentOptions(context);
+                                },
+                                icon: Icon(
+                                  Icons.attach_file,
+                                  color: Colors.grey,
+                                  size: 24.sp,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        IconButton(
-                          onPressed: () {
-                            _showAttachmentOptions(context);
-                          },
-                          icon: Icon(
-                            Icons.attach_file,
-                            color: Colors.grey,
-                            size: 24.sp,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
                 SizedBox(width: 8.w),
-                Container(
-                  width: 50.w,
-                  height: 50.h,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFE56B6F),
-                    borderRadius: BorderRadius.circular(25.r),
-                  ),
-                  child: IconButton(
-                    onPressed: _messageController.text.isNotEmpty
-                        ? () => _sendMessage(
-                            _messageController.text, MessageType.text)
-                        : _isRecording
-                            ? _stopRecording
-                            : _startRecording,
-                    icon: Icon(
+                GestureDetector(
+                  onLongPressStart: (_) => _startRecording(),
+                  onLongPressEnd: (_) => _stopRecording(),
+                  // onTapCancel: () => _stopRecording(),
+                  onTap: (_messageController.text.isNotEmpty)
+                      ? () {
+                          _sendMessage(
+                              _messageController.text, MessageType.text);
+                        }
+                      : null,
+                  child: Container(
+                    width: 50.w,
+                    height: 50.h,
+                    decoration: BoxDecoration(
+                      color: _isRecording ? Colors.red : Color(0xFFE56B6F),
+                      borderRadius: BorderRadius.circular(25.r),
+                    ),
+                    child: Icon(
                       _messageController.text.isNotEmpty
                           ? Icons.send
                           : _isRecording
-                              ? Icons.stop
-                              : Icons.mic,
+                              ? Icons.mic
+                              : Icons.mic_none,
                       color: Colors.white,
                       size: 24.sp,
                     ),
@@ -419,6 +500,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageItem(Message message, bool isMe) {
     final bool isSending = _sendingMessages.containsKey(message.id);
+    final bool isGroupChat = widget.isGroup;
+    final bool isUnread = !message.readBy.contains(widget.currentUserId);
 
     return Container(
       margin: EdgeInsets.symmetric(
@@ -444,7 +527,24 @@ class _ChatScreenState extends State<ChatScreen> {
               color: isMe ? null : const Color(0xFFDADADA),
               borderRadius: BorderRadius.circular(12.r),
             ),
-            child: _buildMessageContent(message),
+            child: Column(
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (isGroupChat && !isMe)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 4.h),
+                    child: Text(
+                      message.senderName,
+                      style: style14.copyWith(
+                        color: lightOrangeColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                _buildMessageContent(message),
+              ],
+            ),
           ),
           // Show loading indicator for sending messages
           if (isSending && isMe)
@@ -479,10 +579,11 @@ class _ChatScreenState extends State<ChatScreen> {
       case MessageType.text:
         return Text(
           message.content,
-          style: style17.copyWith(
+          style: style16.copyWith(
             color: message.senderId == widget.currentUserId
                 ? Colors.white
                 : Colors.black,
+            fontWeight: FontWeight.w400,
           ),
         );
       case MessageType.image:
@@ -1154,13 +1255,15 @@ class _ChatScreenState extends State<ChatScreen> {
             width: double.maxFinite,
             height: 300.h,
             child: StreamBuilder<List<AppUser>?>(
-              stream: _databaseService.allUsersStream(widget.currentUserId),
+              stream: _databaseService.allUsersStream(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return Center(child: CircularProgressIndicator());
                 }
 
-                final users = snapshot.data!;
+                final users = snapshot.data!
+                    .where((element) => element.uid != widget.currentUserId)
+                    .toList();
                 return ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) {

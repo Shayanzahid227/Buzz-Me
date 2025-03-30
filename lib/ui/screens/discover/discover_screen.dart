@@ -1,6 +1,7 @@
 import 'package:card_swiper/card_swiper.dart';
 import 'package:code_structure/core/constants/app_assest.dart';
 import 'package:code_structure/core/constants/colors.dart';
+import 'package:code_structure/core/enums/view_state_model.dart';
 import 'package:code_structure/core/providers/all_users_provider.dart';
 import 'package:code_structure/core/services/database_services.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/discover_screen.dart';
@@ -33,6 +34,18 @@ class DiscoverScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AllUsersProvider>(builder: (context, usersProvider, child) {
+      // Show loading indicator if users are being fetched
+      if (usersProvider.state == ViewState.busy) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      if (usersProvider.users.isEmpty) {
+        return Center(child: CircularProgressIndicator());
+      }
+
+      print(usersProvider.users.length);
+
+      print('buildddd');
       return ChangeNotifierProvider(
         create: (context) => DiscoverSCreenViewModel(usersProvider.users),
         child: Consumer<DiscoverSCreenViewModel>(

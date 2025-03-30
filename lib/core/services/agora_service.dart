@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class AgoraService {
-  static const String appId = "3c7b549ae83a4ac98b285578e3648f80";
+  static const String appId = "7564ffdc7bb94a719019cbc9980d3427";
   // Replace with your Firebase Functions URL
   static const String serverUrl =
       "https://generatetoken-lczraojsja-uc.a.run.app";
@@ -25,8 +25,9 @@ class AgoraService {
       }
 
       // Validate channel name characters
-      final validCharacters =
-          RegExp(r'^[a-zA-Z0-9!#\$%&\(\)\+\-\:;<=>?@\[\]\^_\{\}\|~,]+$');
+      final validCharacters = RegExp(
+        r'^[a-zA-Z0-9!#\$%&\(\)\+\-\:;<=>?@\[\]\^_\{\}\|~,]+$',
+      );
       if (!validCharacters.hasMatch(channelName)) {
         throw Exception('Channel name contains invalid characters');
       }
@@ -51,10 +52,7 @@ class AgoraService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',
         },
-        body: jsonEncode({
-          'channelName': channelName,
-          'uid': 0,
-        }),
+        body: jsonEncode({'channelName': channelName, 'uid': 0}),
       );
 
       if (response.statusCode == 200) {
@@ -69,7 +67,9 @@ class AgoraService {
 
         return token;
       }
-      log('Failed to generate token. Status code: ${response.statusCode}, Response: ${response.body}');
+      log(
+        'Failed to generate token. Status code: ${response.statusCode}, Response: ${response.body}',
+      );
       throw Exception('Failed to generate token: ${response.body}');
     } catch (e) {
       log('Error generating token: $e');
@@ -81,9 +81,11 @@ class AgoraService {
 
   Future<void> initializeEngine() async {
     final engine = createAgoraRtcEngine();
-    await engine.initialize(RtcEngineContext(
-      appId: appId,
-      channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
-    ));
+    await engine.initialize(
+      RtcEngineContext(
+        appId: appId,
+        channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
+      ),
+    );
   }
 }

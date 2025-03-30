@@ -101,9 +101,8 @@ class EditProfileViewModel extends BaseViewModel {
     return appUser.userName != null &&
         appUser.dob != null &&
         appUser.gender != null &&
-        appUser.about != null &&
-        appUser.about!.isNotEmpty &&
-        (selectedImages?.any((img) => img != null) ?? false);
+        ((selectedImages?.any((img) => img != null) ?? false) ||
+            (appUser.images?.any((img) => img != null) ?? false));
   }
 
   Future<bool> updateUser() async {

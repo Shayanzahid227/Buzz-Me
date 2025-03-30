@@ -79,6 +79,7 @@ class DiscoverSCreenViewModel extends BaseViewModel {
   double? filterLongitude;
 
   DiscoverSCreenViewModel(List<AppUser> users) {
+    print('kajsdkjfkabf ${users.length}');
     allUsers = users;
     filteredUsers = List.from(allUsers);
     _initializeCards(filteredUsers);
@@ -103,8 +104,9 @@ class DiscoverSCreenViewModel extends BaseViewModel {
           },
         );
       }).toList();
-
+      isLoading = false;
       matchEngine = MatchEngine(swipeItems: _swipeItems);
+      notifyListeners();
     } finally {
       isLoading = false;
       notifyListeners();

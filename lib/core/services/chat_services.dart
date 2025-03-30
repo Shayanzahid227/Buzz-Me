@@ -33,6 +33,11 @@ class ChatService {
 
       // Create new chat
       final String chatId = uuid.v4();
+      final Map<String, int> initialUnreadCounts = {};
+      for (String participant in participants) {
+        initialUnreadCounts[participant] = 0;
+      }
+
       final Chat chat = Chat(
         id: chatId,
         participants: participants,
@@ -43,7 +48,7 @@ class ChatService {
         lastMessageSenderId: participants[0],
         isGroup: isGroup,
         lastMessageType: MessageType.text,
-        unreadCount: 0,
+        unreadCounts: initialUnreadCounts,
       );
 
       await _firestore
@@ -60,6 +65,20 @@ class ChatService {
   // Send a message
   Future<void> sendMessage(Message message, String chatId) async {
     try {
+      // Get the chat document to update unread counts
+      final chatDoc =
+          await _firestore.collection(ChatCollection).doc(chatId).get();
+      final chat = Chat.fromJson(chatDoc.data()!);
+
+      // Increment unread count for all participants except the sender
+      final Map<String, int> newUnreadCounts = Map.from(chat.unreadCounts);
+      for (String participantId in chat.participants) {
+        if (participantId != message.senderId) {
+          newUnreadCounts[participantId] =
+              (newUnreadCounts[participantId] ?? 0) + 1;
+        }
+      }
+
       // Send the message
       await _firestore
           .collection(ChatCollection)
@@ -68,13 +87,13 @@ class ChatService {
           .doc(message.id)
           .set(message.toJson());
 
-      // Update last message in chat
+      // Update last message and unread counts in chat
       final chatUpdate = {
         'lastMessage': message.content,
         'lastMessageType': message.type.toString(),
         'lastMessageTime': message.timestamp,
         'lastMessageSenderId': message.senderId,
-        // 'unreadCount': FieldValue.increment(1),
+        'unreadCounts': newUnreadCounts,
       };
 
       await _firestore
@@ -191,5 +210,41 @@ class ChatService {
 
       return participants;
     });
+  }
+
+  // Mark messages as read for a specific user
+  Future<void> markMessagesAsRead(String chatId, String userId) async {
+    try {
+      // Get all unread messages for this user in this chat
+      final messagesSnapshot = await _firestore
+          .collection(ChatCollection)
+          .doc(chatId)
+          .collection('messages')
+          .where('readBy', isNotEqualTo: [userId]).get();
+
+      // Update each message to mark it as read by this user
+      final batch = _firestore.batch();
+      for (var doc in messagesSnapshot.docs) {
+        final messageRef = _firestore
+            .collection(ChatCollection)
+            .doc(chatId)
+            .collection('messages')
+            .doc(doc.id);
+
+        batch.update(messageRef, {
+          'readBy': FieldValue.arrayUnion([userId])
+        });
+      }
+
+      // Update the chat's unread count for this user
+      final chatRef = _firestore.collection(ChatCollection).doc(chatId);
+      batch.update(chatRef, {'unreadCounts.$userId': 0});
+
+      // Commit all updates
+      await batch.commit();
+    } catch (e) {
+      print('Error marking messages as read: $e');
+      throw Exception('Failed to mark messages as read');
+    }
   }
 }

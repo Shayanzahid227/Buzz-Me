@@ -66,55 +66,55 @@ class RootScreen extends StatelessWidget {
                           ? AppAssets().discover2
                           : AppAssets().discover1,
 
-                      // 0 mean index 0
-                      color:
-                          model.selectedScreen == 0 ? Colors.grey : Colors.grey,
+                      // // 0 mean index 0
+                      // color:
+                      //     model.selectedScreen == 0 ? Colors.grey : Colors.grey,
                       scale: 4,
                     ),
                   ),
                 ),
 
                 CustomBottomNavigatorBar(
-                  image: AppAssets().nearby1,
+                  image: model.selectedScreen == 1
+                      ? AppAssets().nearby2
+                      : AppAssets().nearby1,
                   onTap: () {
                     model.updatedScreen(1);
                   },
-                  iconColor:
-                      model.selectedScreen == 1 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 1
                       ? Colors.transparent
                       : Colors.transparent,
                 ),
 
                 CustomBottomNavigatorBar(
-                  image: AppAssets().Favorite1,
+                  image: model.selectedScreen == 2
+                      ? AppAssets().Favorite2
+                      : AppAssets().Favorite1,
                   onTap: () {
                     model.updatedScreen(2);
                   },
-                  iconColor:
-                      model.selectedScreen == 2 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 2
                       ? Colors.transparent
                       : Colors.transparent,
                 ),
                 CustomBottomNavigatorBar(
-                  image: AppAssets().Message1,
+                  image: model.selectedScreen == 3
+                      ? AppAssets().Message2
+                      : AppAssets().Message1,
                   onTap: () {
                     model.updatedScreen(3);
                   },
-                  iconColor:
-                      model.selectedScreen == 3 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 3
                       ? Colors.transparent
                       : Colors.transparent,
                 ),
                 CustomBottomNavigatorBar(
-                  image: AppAssets().Profile1,
+                  image: model.selectedScreen == 4
+                      ? AppAssets().Profile2
+                      : AppAssets().Profile1,
                   onTap: () {
                     model.updatedScreen(4);
                   },
-                  iconColor:
-                      model.selectedScreen == 4 ? Colors.grey : Colors.grey,
                   boxColor: model.selectedScreen == 4
                       ? Colors.transparent
                       : Colors.transparent,

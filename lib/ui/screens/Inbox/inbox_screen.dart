@@ -174,13 +174,14 @@ class _InboxScreenState extends State<InboxScreen>
         SizedBox(
           height: 100.h,
           child: StreamBuilder<List<AppUser>?>(
-            stream: _databaseServices.allUsersStream(widget.currentUserId),
+            stream: _databaseServices.allUsersStream(),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
               final users = snapshot.data!
+                  .where((user) => user.uid != widget.currentUserId)
                   .where((user) => user.isOnline ?? false)
                   .where((user) =>
                       user.userName!.toLowerCase().contains(_searchQuery))
@@ -271,6 +272,7 @@ class _InboxScreenState extends State<InboxScreen>
 
   Widget _buildChatListTile(Chat chat, AppUser otherUser) {
     final lastMessageTime = timeago.format(chat.lastMessageTime);
+    final unreadCount = chat.getUnreadCountForUser(widget.currentUserId);
 
     return ListTile(
       onTap: () {
@@ -334,7 +336,7 @@ class _InboxScreenState extends State<InboxScreen>
             lastMessageTime,
             style: style14.copyWith(color: Colors.grey),
           ),
-          if (chat.unreadCount > 0)
+          if (unreadCount > 0)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
               decoration: BoxDecoration(
@@ -344,7 +346,7 @@ class _InboxScreenState extends State<InboxScreen>
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Text(
-                chat.unreadCount.toString(),
+                unreadCount.toString(),
                 style: style14.copyWith(color: Colors.white),
               ),
             ),
@@ -412,6 +414,7 @@ class _InboxScreenState extends State<InboxScreen>
 
   Widget _buildGroupListTile(Chat group) {
     final lastMessageTime = timeago.format(group.lastMessageTime);
+    final unreadCount = group.getUnreadCountForUser(widget.currentUserId);
 
     return ListTile(
       onTap: () {
@@ -464,7 +467,7 @@ class _InboxScreenState extends State<InboxScreen>
             lastMessageTime,
             style: style14.copyWith(color: Colors.grey),
           ),
-          if (group.unreadCount > 0)
+          if (unreadCount > 0)
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
               decoration: BoxDecoration(
@@ -474,7 +477,7 @@ class _InboxScreenState extends State<InboxScreen>
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Text(
-                group.unreadCount.toString(),
+                unreadCount.toString(),
                 style: style14.copyWith(color: Colors.white),
               ),
             ),
@@ -508,14 +511,15 @@ class _InboxScreenState extends State<InboxScreen>
                 Container(
                   height: 300.h,
                   child: StreamBuilder<List<AppUser>?>(
-                    stream:
-                        _databaseServices.allUsersStream(widget.currentUserId),
+                    stream: _databaseServices.allUsersStream(),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(child: CircularProgressIndicator());
                       }
 
-                      final users = snapshot.data!;
+                      final users = snapshot.data!
+                          .where((user) => user.uid != widget.currentUserId)
+                          .toList();
                       return ListView.builder(
                         itemCount: users.length,
                         itemBuilder: (context, index) {
@@ -657,11 +661,30 @@ class _InboxScreenState extends State<InboxScreen>
           return const Center(child: CircularProgressIndicator());
         }
 
-        final myStories = snapshot.data!
-            .where((story) => story.userId == widget.currentUserId)
-            .toList();
-        final otherStories = snapshot.data!
-            .where((story) => story.userId != widget.currentUserId)
+        // Group stories by user
+        final Map<String, List<Story>> storiesByUser = {};
+        for (var story in snapshot.data!) {
+          if (!storiesByUser.containsKey(story.userId)) {
+            storiesByUser[story.userId] = [];
+          }
+          storiesByUser[story.userId]!.add(story);
+        }
+
+        // Sort stories by user by most recent story
+        final sortedUserIds = storiesByUser.keys.toList()
+          ..sort((a, b) {
+            final aLatestStory = storiesByUser[a]!.reduce((curr, next) =>
+                curr.createdAt.isAfter(next.createdAt) ? curr : next);
+            final bLatestStory = storiesByUser[b]!.reduce((curr, next) =>
+                curr.createdAt.isAfter(next.createdAt) ? curr : next);
+            return bLatestStory.createdAt.compareTo(aLatestStory.createdAt);
+          });
+
+        final myStories = storiesByUser[widget.currentUserId] ?? [];
+        final otherStories = sortedUserIds
+            .where((userId) => userId != widget.currentUserId)
+            .map((userId) => storiesByUser[userId]!.reduce((curr, next) =>
+                curr.createdAt.isAfter(next.createdAt) ? curr : next))
             .toList();
 
         return SingleChildScrollView(
@@ -717,9 +740,11 @@ class _InboxScreenState extends State<InboxScreen>
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: myStories.length,
+                    itemCount: 1,
                     itemBuilder: (context, index) {
-                      return _buildStoryCard(myStories[index], myStories,
+                      final latestStory = myStories.reduce((curr, next) =>
+                          curr.createdAt.isAfter(next.createdAt) ? curr : next);
+                      return _buildStoryCard(latestStory, myStories,
                           isMyStory: true);
                     },
                   ),
@@ -749,7 +774,8 @@ class _InboxScreenState extends State<InboxScreen>
                   ),
                   itemCount: otherStories.length,
                   itemBuilder: (context, index) {
-                    return _buildStoryCard(otherStories[index], otherStories);
+                    final story = otherStories[index];
+                    return _buildStoryCard(story, storiesByUser[story.userId]!);
                   },
                 ),
               ),
@@ -1244,7 +1270,7 @@ class _CachedStoryCardState extends State<CachedStoryCard> {
                         SizedBox(width: 8.w),
                         Expanded(
                           child: Text(
-                            _user?.userName ?? 'Unknown',
+                            _user?.userName ?? 'Loading...',
                             style: style14.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -1268,17 +1294,6 @@ class _CachedStoryCardState extends State<CachedStoryCard> {
                           '${widget.story.viewedBy.length}',
                           style: style14.copyWith(color: Colors.white70),
                         ),
-                        SizedBox(width: 12.w),
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 14.r,
-                          color: Colors.white70,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          '${widget.story.commentCount}',
-                          style: style14.copyWith(color: Colors.white70),
-                        ),
                       ],
                     ),
                   ],
@@ -1293,18 +1308,66 @@ class _CachedStoryCardState extends State<CachedStoryCard> {
 
   Widget _buildMediaContent() {
     if (_cachedMediaPath != null) {
-      return Image.file(
-        File(_cachedMediaPath!),
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
+      if (widget.story.type == StoryType.video) {
+        // For videos, use the thumbnail path if available
+        if (_thumbnailPath != null) {
+          return Image.file(
+            File(_thumbnailPath!),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (context, error, stackTrace) {
+              print('Error loading thumbnail: $error');
+              return Container(
+                color: Colors.grey[300],
+                child: Center(
+                  child: Icon(Icons.videocam, size: 40.r, color: Colors.grey),
+                ),
+              );
+            },
+          );
+        } else {
+          // Fallback for videos without thumbnail
+          return Container(
+            color: Colors.grey[300],
+            child: Center(
+              child: Icon(Icons.videocam, size: 40.r, color: Colors.grey),
+            ),
+          );
+        }
+      } else {
+        // For images
+        return Image.file(
+          File(_cachedMediaPath!),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('Error loading image: $error');
+            return Container(
+              color: Colors.grey[300],
+              child: Center(
+                child: Icon(Icons.broken_image, size: 40.r, color: Colors.grey),
+              ),
+            );
+          },
+        );
+      }
     } else if (_thumbnailPath != null) {
       return Image.file(
         File(_thumbnailPath!),
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading thumbnail: $error');
+          return Container(
+            color: Colors.grey[300],
+            child: Center(
+              child: Icon(Icons.videocam, size: 40.r, color: Colors.grey),
+            ),
+          );
+        },
       );
     } else {
       // Fallback to network image if both cached paths are null
@@ -1326,8 +1389,12 @@ class _CachedStoryCardState extends State<CachedStoryCard> {
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          return Center(
-            child: Icon(Icons.broken_image, color: Colors.white),
+          print('Error loading network image: $error');
+          return Container(
+            color: Colors.grey[300],
+            child: Center(
+              child: Icon(Icons.broken_image, size: 40.r, color: Colors.grey),
+            ),
           );
         },
       );

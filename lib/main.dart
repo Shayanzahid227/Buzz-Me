@@ -85,7 +85,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         providers: [
           ChangeNotifierProvider(
             create: (context) => AllUsersProvider(),
-            lazy: false,
+            lazy: true,
           ),
           ChangeNotifierProvider(
             create: (context) => UserProvider(),
@@ -102,6 +102,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
+          title: 'Talksy',
           theme: ThemeData(
             scaffoldBackgroundColor: const Color(0xffFAF8F6),
           ),

@@ -58,7 +58,8 @@ class _LogInScreenState extends State<LogInScreen> {
                   ),
                   10.verticalSpace,
                   Image.asset(
-                    AppAssets().buzzmeText,
+                    AppAssets().talksyText,
+                    scale: 4,
                     height: 50.h,
                     width: 140.w,
                   ),
@@ -70,9 +71,13 @@ class _LogInScreenState extends State<LogInScreen> {
                     onPressed: () async {
                       final result = await viewModel.signInWithFacebook();
                       if (result != null) {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => RootScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(
+                              canPop: false,
+                            ),
+                          ),
                         );
                       }
                     },
@@ -85,14 +90,12 @@ class _LogInScreenState extends State<LogInScreen> {
                     onPressed: () async {
                       final result = await viewModel.signInWithGoogle();
                       if (result != null) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => RootScreen()),
-                        );
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EditProfileScreen(),
+                            builder: (context) => EditProfileScreen(
+                              canPop: false,
+                            ),
                           ),
                         );
                       }

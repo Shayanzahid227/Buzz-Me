@@ -10,7 +10,7 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
-const stripe = require("stripe")("sk_test_51Lxl0OLy0LoiWOlnUD6hTUGXbyYHfe1JVk3kMOMtu4xR5fY52UDxEPC9aJnRZ9GM3wBRD2X5Jtt8IiXiNpksgzkF00WpLMRVTX"); // Replace with your Stripe secret key
+const stripe = require("stripe")("sk_live_gSNMEgnph76aYVgDPeEoosiz"); // Replace with your Stripe secret key
 const { RtcTokenBuilder, RtmTokenBuilder, RtcRole } = require('agora-access-token');
 const functions = require('firebase-functions');
 

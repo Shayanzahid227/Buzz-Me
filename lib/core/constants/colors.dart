@@ -50,3 +50,11 @@ const Color lightPurple1 = Color(0xffB35FE6);
 const Color lightPurple2 = Color(0xffC480E9);
 const Color lightPurple3 = Color(0xffE6C7F5);
 const Color appBarColor = Color(0xffECECEC);
+
+const LinearGradient maleColors = LinearGradient(
+  colors: [darkBlueColor, skyBlueColor],
+);
+
+const LinearGradient femaleColors = LinearGradient(
+  colors: [lightOrangeColor, lightPinkColor],
+);

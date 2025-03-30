@@ -20,12 +20,6 @@ class CustomNearbyAllUserWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ///
-    ///  to change the color according to gender
-    ///
-    final List<Color> gradientColors = appUser.gender == AppAssets().genderWoman
-        ? [lightPinkColor, lightOrangeColor] // Gradient for female
-        : [darkBlueColor, skyBlueColor];
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -63,10 +57,9 @@ class CustomNearbyAllUserWidget extends StatelessWidget {
                   ),
                   Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: gradientColors
-
-                          //colors: [lightPinkColor, lightOrangeColor],
-                          ),
+                      gradient: appUser.gender == 'Female'
+                          ? femaleColors
+                          : maleColors,
                       borderRadius: BorderRadius.circular(60.r),
                       //  color: Colors.orange,
                     ),

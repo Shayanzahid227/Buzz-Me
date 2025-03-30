@@ -41,7 +41,8 @@ class LogInViewModel extends BaseViewModel {
     try {
       setState(ViewState.busy);
       // Trigger the sign-in flow
-      final LoginResult loginResult = await FacebookAuth.instance.login();
+      final LoginResult loginResult =
+          await FacebookAuth.instance.login(permissions: []);
 
       if (loginResult.status != LoginStatus.success) return null;
 

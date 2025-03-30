@@ -5,13 +5,13 @@ class CustomBottomNavigatorBar extends StatelessWidget {
   String? image;
   VoidCallback? onTap;
   Color? boxColor;
-  Color? iconColor;
-  CustomBottomNavigatorBar(
-      {super.key,
-      required this.image,
-      required this.onTap,
-      required this.boxColor,
-      required this.iconColor});
+
+  CustomBottomNavigatorBar({
+    super.key,
+    required this.image,
+    required this.onTap,
+    required this.boxColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,6 @@ class CustomBottomNavigatorBar extends StatelessWidget {
             color: boxColor, borderRadius: BorderRadius.circular(13.r)),
         child: Image.asset(
           image!,
-          color: iconColor,
           scale: 4,
         ),
       ),

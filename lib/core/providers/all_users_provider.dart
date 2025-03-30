@@ -18,15 +18,22 @@ class AllUsersProvider extends BaseViewModel {
   getUsers() async {
     setState(ViewState.busy);
     // get users from database
-    Stream usersStream =
-        await _databaseServices.allUsersStream(_auth.currentUser!.uid);
+
+    Stream usersStream = await _databaseServices.allUsersStream();
 
     print('got users');
 
     usersStream.listen((event) {
       users = event;
+      if (_auth.currentUser != null && _auth.currentUser!.uid.isNotEmpty) {
+        users = event
+            .where((element) => element.uid != _auth.currentUser!.uid)
+            .toList();
+      }
+      notifyListeners();
       setState(ViewState.idle);
     });
+
     setState(ViewState.idle);
   }
 }

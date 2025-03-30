@@ -62,7 +62,8 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             10.verticalSpace,
             Image.asset(
-              AppAssets().buzzmeText,
+              AppAssets().talksyText,
+              scale: 4,
               height: 50.h,
               width: 140.w,
             ),

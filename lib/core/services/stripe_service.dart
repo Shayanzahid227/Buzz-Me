@@ -7,8 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class StripeService {
   // Your Stripe publishable key from the dashboard
-  static const String _publishableKey =
-      'pk_test_51Lxl0OLy0LoiWOlnlZH3GNGXV7vDAjj9uJcVYcNiPcBapitoe0HGLXebIsQ3zvMRFSAJwNxibAojwCc6pUNO2Svm00CRrVl3ua';
+  static const String _publishableKey = 'pk_live_EpYHrMM2xRiGLvBMYqvdO62C';
 
   static final CallMinutesService _callMinutesService = CallMinutesService();
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -134,10 +133,7 @@ class StripeService {
         status: 'succeeded',
         paymentMethod: paymentMethod,
         paymentIntentId: paymentIntent['id'],
-        items: {
-          'audioMinutes': audioMinutes,
-          'videoMinutes': videoMinutes,
-        },
+        items: {'audioMinutes': audioMinutes, 'videoMinutes': videoMinutes},
       );
 
       // Return success result
@@ -187,10 +183,7 @@ class StripeService {
         );
       }
 
-      return PaymentIntentResult(
-        status: 'failed',
-        errorMessage: e.toString(),
-      );
+      return PaymentIntentResult(status: 'failed', errorMessage: e.toString());
     }
   }
 
@@ -246,9 +239,7 @@ class StripeService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',
         },
-        body: jsonEncode({
-          'subscriptionId': subscriptionId,
-        }),
+        body: jsonEncode({'subscriptionId': subscriptionId}),
       );
 
       if (response.statusCode != 200) {

@@ -12,7 +12,7 @@ class AppAssets {
   String category = "$staticAssets/category.png"; // vip center
   String Artwork = "$staticAssets/Artwork.png";
   String stars = "$staticAssets/stars.png";
-  String buzzmeText = "$staticAssets/buzzmetext.png";
+  String talksyText = "$staticAssets/talksytext.png";
   String fbIcon = "$iconsAssets/fbIcon.png";
   String googleIcon = "$iconsAssets/googleIcon.png";
   String freeVip = "$staticAssets/freeVip.png";
@@ -34,5 +34,20 @@ class AppAssets {
   String crown = "$iconsAssets/crown.png";
   String cancel = "$iconsAssets/cancel.png";
 
-  String pic = "$dynamicAssets/pic.png";
+  ///
+  ///
+  ///
+
+  String blacklist = "$iconsAssets/Blacklist.png";
+  String call = "$iconsAssets/call.png";
+  String camera = "$iconsAssets/camera.png";
+  String eyeIcon = "$iconsAssets/eyeIcon.png";
+  String friends = "$iconsAssets/Friends.png";
+  String groups = "$iconsAssets/Groups.png";
+  String matches = "$iconsAssets/matches.png";
+  String messages = "$iconsAssets/messages.png";
+  String star = "$iconsAssets/star.png";
+  String wallet = "$iconsAssets/Wallet.png";
+
+  String pic = "$dynamicAssets/pic.jpg";
 }

@@ -5,6 +5,7 @@ import 'package:code_structure/core/enums/view_state_model.dart';
 import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/core/providers/user_provider.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
+import 'package:code_structure/ui/root_screen/root_screen.dart';
 import 'package:code_structure/ui/screens/edit_profile/edit_profile_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,7 +16,11 @@ import 'package:code_structure/core/services/image_cache_helper.dart';
 import 'dart:io';
 
 class EditProfileScreen extends StatelessWidget {
-  EditProfileScreen({Key? key}) : super(key: key);
+  final bool canPop;
+  EditProfileScreen({
+    Key? key,
+    this.canPop = true,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -23,241 +28,256 @@ class EditProfileScreen extends StatelessWidget {
       create: (context) => EditProfileViewModel(),
       child: Consumer2<EditProfileViewModel, UserProvider>(
           builder: (context, viewModel, userProvider, child) {
-        return ModalProgressHUD(
-          inAsyncCall: viewModel.state == ViewState.busy,
-          progressIndicator: CircularProgressIndicator(
-            color: lightOrangeColor,
-          ),
-          child: Scaffold(
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              centerTitle: true,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              title:
-                  const Text("Profile", style: TextStyle(color: Colors.black)),
-              actions: [
-                TextButton(
-                  onPressed: () async {
-                    if (viewModel.isProfileComplete) {
-                      await viewModel.updateUser();
-                      userProvider.getUser();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                  child:
-                      const Text("Done", style: TextStyle(color: Colors.pink)),
-                ),
-              ],
+        return PopScope(
+          canPop: canPop,
+          child: ModalProgressHUD(
+            inAsyncCall: viewModel.state == ViewState.busy,
+            progressIndicator: CircularProgressIndicator(
+              color: lightOrangeColor,
             ),
-            body: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  16.verticalSpace,
-                  _buildPhotoGrid(viewModel, context),
-                  20.verticalSpace,
-
-                  // Profile Info
-                  _buildInfoRow(
-                    "Username",
-                    viewModel.appUser.userName ?? "Not set",
-                    onTap: () {
-                      _displayUsernameDialog(context, viewModel);
+            child: Scaffold(
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                centerTitle: true,
+                automaticallyImplyLeading: false,
+                leading: canPop
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed:
+                            canPop ? () => Navigator.of(context).pop() : null,
+                      )
+                    : null,
+                title: const Text("Profile",
+                    style: TextStyle(color: Colors.black)),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      if (viewModel.isProfileComplete) {
+                        await viewModel.updateUser();
+                        userProvider.getUser();
+                        if (!canPop) {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => RootScreen()),
+                              (route) => false);
+                        } else {
+                          Navigator.of(context).pop();
+                        }
+                      }
                     },
+                    child: const Text("Done",
+                        style: TextStyle(color: Colors.pink)),
                   ),
-                  _buildInfoRow(
-                    "Birthday",
-                    viewModel.appUser.dob != null
-                        ? DateFormat('MMM dd, yyyy')
-                            .format(viewModel.appUser.dob!)
-                        : 'Not set',
-                    showArrow: true,
-                    onTap: () {
-                      _displayDatePicker(context, viewModel);
-                    },
-                  ),
-                  _buildInfoRow(
-                    "Gender",
-                    viewModel.appUser.gender ?? "Not set",
-                    showArrow: true,
-                    onTap: () {
-                      _displayGenderDialog(context, viewModel);
-                    },
-                  ),
+                ],
+              ),
+              body: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    16.verticalSpace,
+                    _buildPhotoGrid(viewModel, context),
+                    20.verticalSpace,
 
-                  36.verticalSpace,
+                    // Profile Info
+                    _buildInfoRow(
+                      "Username",
+                      viewModel.appUser.userName ?? "Not set",
+                      onTap: () {
+                        _displayUsernameDialog(context, viewModel);
+                      },
+                    ),
+                    _buildInfoRow(
+                      "Birthday",
+                      viewModel.appUser.dob != null
+                          ? DateFormat('MMM dd, yyyy')
+                              .format(viewModel.appUser.dob!)
+                          : 'Not set',
+                      showArrow: true,
+                      onTap: () {
+                        _displayDatePicker(context, viewModel);
+                      },
+                    ),
+                    _buildInfoRow(
+                      "Gender",
+                      viewModel.appUser.gender ?? "Not set",
+                      showArrow: true,
+                      onTap: () {
+                        _displayGenderDialog(context, viewModel);
+                      },
+                    ),
 
-                  // About you
-                  GestureDetector(
-                    onTap: () => _displayAboutDialog(context, viewModel),
-                    child: Column(
+                    36.verticalSpace,
+
+                    // About you
+                    GestureDetector(
+                      onTap: () => _displayAboutDialog(context, viewModel),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "About you",
+                            style: style25B,
+                          ),
+                          10.verticalSpace,
+                          Text(
+                            viewModel.appUser.about ?? "Tap to add description",
+                            style: style17.copyWith(
+                              fontWeight: FontWeight.w400,
+                              color: viewModel.appUser.about != null
+                                  ? Colors.black
+                                  : Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    19.verticalSpace,
+                    Divider(
+                      height: 1,
+                      color: Colors.grey[300],
+                    ),
+
+                    _buildInfoRow(
+                      'Height',
+                      '${viewModel.appUser.height ?? '??'} cm',
+                      onTap: () {
+                        _displayHeightDialog(context, viewModel);
+                      },
+                    ),
+                    _buildInfoRow(
+                      'Weight',
+                      '${viewModel.appUser.weight ?? '??'} kg',
+                      onTap: () {
+                        _displayWeightDialog(context, viewModel);
+                      },
+                    ),
+
+                    // Relationship status
+                    _buildInfoRow(
+                      "Relationship status",
+                      viewModel.appUser.relationshipStatus ?? 'Not set',
+                      showArrow: true,
+                      onTap: () {
+                        _displayRelationshipStatusDialog(context, viewModel);
+                      },
+                    ),
+                    _buildInfoRow(
+                      "Looking for",
+                      viewModel.appUser.lookingFor?.join(', ') ?? 'Not set',
+                      showArrow: true,
+                      onTap: () => _displayLookingForDialog(context, viewModel),
+                    ),
+
+                    30.verticalSpace,
+
+                    // Interesting
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "About you",
+                          "Interesting",
                           style: style25B,
                         ),
-                        10.verticalSpace,
-                        Text(
-                          viewModel.appUser.about ?? "Tap to add description",
-                          style: style17.copyWith(
-                            fontWeight: FontWeight.w400,
-                            color: viewModel.appUser.about != null
-                                ? Colors.black
-                                : Colors.grey,
+                        20.verticalSpace,
+                        Wrap(
+                          runSpacing: 15.0,
+                          spacing: 18.0,
+                          children: List.generate(
+                            viewModel.appUser.interests?.length ?? 0,
+                            (index) {
+                              return CustomInterestingWidget(
+                                  userProfileModel:
+                                      UserProfileInterestingItemModel(
+                                          title: viewModel
+                                              .appUser.interests![index]));
+                            },
+                          ),
+                        ),
+                        30.verticalSpace,
+                        GestureDetector(
+                          onTap: () {
+                            _displayAddInterestDialog(context, viewModel);
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 17.h),
+                            decoration: BoxDecoration(
+                                border: Border.all(color: lightPinkColor),
+                                borderRadius: BorderRadius.circular(8)),
+                            child: Center(
+                              child: Text(
+                                "Add more interests",
+                                style: TextStyle(
+                                    fontSize: 14, color: lightPinkColor),
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  19.verticalSpace,
-                  Divider(
-                    height: 1,
-                    color: Colors.grey[300],
-                  ),
 
-                  _buildInfoRow(
-                    'Height',
-                    '${viewModel.appUser.height ?? '??'} cm',
-                    onTap: () {
-                      _displayHeightDialog(context, viewModel);
-                    },
-                  ),
-                  _buildInfoRow(
-                    'Weight',
-                    '${viewModel.appUser.weight ?? '??'} kg',
-                    onTap: () {
-                      _displayWeightDialog(context, viewModel);
-                    },
-                  ),
+                    30.verticalSpace,
 
-                  // Relationship status
-                  _buildInfoRow(
-                    "Relationship status",
-                    viewModel.appUser.relationshipStatus ?? 'Not set',
-                    showArrow: true,
-                    onTap: () {
-                      _displayRelationshipStatusDialog(context, viewModel);
-                    },
-                  ),
-                  _buildInfoRow(
-                    "Looking for",
-                    viewModel.appUser.lookingFor?.join(', ') ?? 'Not set',
-                    showArrow: true,
-                    onTap: () => _displayLookingForDialog(context, viewModel),
-                  ),
-
-                  30.verticalSpace,
-
-                  // Interesting
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Interesting",
-                        style: style25B,
-                      ),
-                      20.verticalSpace,
-                      Wrap(
-                        runSpacing: 15.0,
-                        spacing: 18.0,
-                        children: List.generate(
-                          viewModel.appUser.interests?.length ?? 0,
-                          (index) {
-                            return CustomInterestingWidget(
-                                userProfileModel:
-                                    UserProfileInterestingItemModel(
-                                        title: viewModel
-                                            .appUser.interests![index]));
-                          },
+                    // Location
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Location",
+                          style: style25B,
                         ),
-                      ),
-                      30.verticalSpace,
-                      GestureDetector(
-                        onTap: () {
-                          _displayAddInterestDialog(context, viewModel);
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(vertical: 17.h),
-                          decoration: BoxDecoration(
-                              border: Border.all(color: lightPinkColor),
-                              borderRadius: BorderRadius.circular(8)),
-                          child: Center(
-                            child: Text(
-                              "Add more interests",
-                              style: TextStyle(
-                                  fontSize: 14, color: lightPinkColor),
+                        20.verticalSpace,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: lightGreyColor,
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  30.verticalSpace,
-
-                  // Location
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Location",
-                        style: style25B,
-                      ),
-                      20.verticalSpace,
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: lightGreyColor,
-                          ),
-                          10.horizontalSpace,
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () =>
-                                  _showLocationOptions(context, viewModel),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Current location",
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  if (viewModel.appUser.address != null)
+                            10.horizontalSpace,
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () =>
+                                    _showLocationOptions(context, viewModel),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      "${viewModel.appUser.address}",
-                                      style: style17.copyWith(
-                                        color: lightGreyColor3,
-                                        fontWeight: FontWeight.w400,
-                                      ),
+                                      "Current location",
+                                      style: const TextStyle(fontSize: 16),
                                     ),
-                                ],
+                                    if (viewModel.appUser.address != null)
+                                      Text(
+                                        "${viewModel.appUser.address}",
+                                        style: style17.copyWith(
+                                          color: lightGreyColor3,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: lightGreyColor,
-                          ),
-                        ],
-                      ),
-                      20.verticalSpace,
-                      Divider(
-                        height: 1,
-                        color: Colors.grey[300],
-                      ),
-                    ],
-                  ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 12,
+                              color: lightGreyColor,
+                            ),
+                          ],
+                        ),
+                        20.verticalSpace,
+                        Divider(
+                          height: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),

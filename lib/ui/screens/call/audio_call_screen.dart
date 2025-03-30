@@ -47,6 +47,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     super.initState();
     _setupCallStatusListener();
     initializeAgora();
+    _startCallTimeout();
   }
 
   void _setupCallStatusListener() {

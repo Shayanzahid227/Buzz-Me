@@ -5,7 +5,6 @@ import 'package:code_structure/core/constants/text_style.dart';
 import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/model/user_profile.dart';
 import 'package:code_structure/core/services/chat_services.dart';
-import 'package:code_structure/core/services/vip_service.dart';
 import 'package:code_structure/custom_widgets/a_buttons/circular_button.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_interesting.dart';
 import 'package:code_structure/custom_widgets/buzz%20me/user_profile_looking_for.dart';
@@ -238,7 +237,10 @@ class UserProfileScreen extends StatelessWidget {
                           padding: EdgeInsets.symmetric(
                               horizontal: 10.w, vertical: 40.h),
                           child: CircularButton(
-                              onPressed: () {}, icon: AppAssets().cancelIcon),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              icon: AppAssets().cancelIcon),
                         ),
                       ],
                     ),

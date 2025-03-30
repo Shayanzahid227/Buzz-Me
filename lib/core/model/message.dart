@@ -11,6 +11,7 @@ enum MessageType {
 class Message {
   final String id;
   final String senderId;
+  final String senderName;
   final String content;
   final MessageType type;
   final DateTime timestamp;
@@ -18,10 +19,12 @@ class Message {
   final String? fileSize;
   final String? filePath;
   final int? audioDuration;
+  final List<String> readBy;
 
   Message({
     required this.id,
     required this.senderId,
+    required this.senderName,
     required this.content,
     required this.type,
     required this.timestamp,
@@ -29,12 +32,14 @@ class Message {
     this.fileSize,
     this.filePath,
     this.audioDuration,
+    this.readBy = const [],
   });
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'senderId': senderId,
+      'senderName': senderName,
       'content': content,
       'type': type.toString(),
       'timestamp': timestamp,
@@ -42,6 +47,7 @@ class Message {
       'fileSize': fileSize,
       'filePath': filePath,
       'audioDuration': audioDuration,
+      'readBy': readBy,
     };
   }
 
@@ -49,6 +55,7 @@ class Message {
     return Message(
       id: json['id'],
       senderId: json['senderId'],
+      senderName: json['senderName'] ?? 'Unknown user',
       content: json['content'],
       type: MessageType.values.firstWhere((e) => e.toString() == json['type'],
           orElse: () => MessageType.text),
@@ -57,6 +64,7 @@ class Message {
       fileSize: json['fileSize'],
       filePath: json['filePath'],
       audioDuration: json['audioDuration'],
+      readBy: List<String>.from(json['readBy'] ?? []),
     );
   }
 }

@@ -40,14 +40,14 @@ class DatabaseServices {
     }
   }
 
-  Stream<List<AppUser>?> allUsersStream(String uid) {
+  Stream<List<AppUser>?> allUsersStream() {
     try {
       return _firestore.collection(AppUserCollection).snapshots().map((event) {
         print('adfadf ${event.docs.length}');
         final List<AppUser> users = event.docs
             .map((e) => AppUser.fromJson(e.data() as Map<String, dynamic>))
             .toList();
-        return users.where((element) => element.uid != uid).toList();
+        return users;
       });
     } catch (e) {
       print(e.toString());

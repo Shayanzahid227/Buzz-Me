@@ -82,9 +82,9 @@ class CustomDiscoverWIdget extends StatelessWidget {
                     8.horizontalSpace,
                     Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [lightOrangeColor, lightPinkColor],
-                        ),
+                        gradient: appUser.gender == 'Female'
+                            ? femaleColors
+                            : maleColors,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(

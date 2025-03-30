@@ -11,7 +11,7 @@ class Chat {
   final String lastMessageSenderId;
   final bool isGroup;
   final MessageType lastMessageType;
-  final int unreadCount;
+  final Map<String, int> unreadCounts; // Map of user ID to unread count
 
   Chat({
     required this.id,
@@ -23,7 +23,7 @@ class Chat {
     required this.lastMessageSenderId,
     required this.isGroup,
     required this.lastMessageType,
-    required this.unreadCount,
+    required this.unreadCounts,
   });
 
   Map<String, dynamic> toJson() {
@@ -37,7 +37,7 @@ class Chat {
       'lastMessageSenderId': lastMessageSenderId,
       'isGroup': isGroup,
       'lastMessageType': lastMessageType.toString(),
-      'unreadCount': unreadCount,
+      'unreadCounts': unreadCounts,
     };
   }
 
@@ -54,7 +54,12 @@ class Chat {
       lastMessageType: MessageType.values.firstWhere(
           (e) => e.toString() == json['lastMessageType'],
           orElse: () => MessageType.text),
-      unreadCount: json['unreadCount'],
+      unreadCounts: Map<String, int>.from(json['unreadCounts'] ?? {}),
     );
+  }
+
+  // Helper method to get unread count for a specific user
+  int getUnreadCountForUser(String userId) {
+    return unreadCounts[userId] ?? 0;
   }
 }
