@@ -231,7 +231,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
     try {
       // Use the Stripe service to process the payment
-      final result = await StripeService.purchaseCallMinutes(
+      final result = await StripeServices.purchaseCallMinutes(
         context,
         widget.totalAmount,
         widget.audioMinutes,

@@ -384,12 +384,13 @@ class DiscoverScreen extends StatelessWidget {
       }
     } else {
       // User doesn't have enough minutes, show purchase dialog
-      _showPurchaseDialog(context, callType);
+      _showPurchaseDialog(context, callType, otherUser);
     }
   }
 
   // Show dialog to inform user they need to purchase more minutes
-  void _showPurchaseDialog(BuildContext context, String callType) {
+  void _showPurchaseDialog(
+      BuildContext context, String callType, AppUser otherUser) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -410,7 +411,9 @@ class DiscoverScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CartScreen(),
+                  builder: (context) => CartScreen(
+                    user: otherUser,
+                  ),
                 ),
               );
             },

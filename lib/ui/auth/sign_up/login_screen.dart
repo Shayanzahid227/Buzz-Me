@@ -3,6 +3,7 @@ import 'package:code_structure/custom_widgets/a_buttons/social_button.dart';
 import 'package:code_structure/ui/auth/sign_up/login_screen_view_model.dart';
 import 'package:code_structure/ui/root_screen/root_screen.dart';
 import 'package:code_structure/ui/screens/edit_profile/edit_profile_screen.dart';
+import 'package:code_structure/ui/screens/edit_profile/edit_profile_view_model.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -76,6 +77,7 @@ class _LogInScreenState extends State<LogInScreen> {
                           MaterialPageRoute(
                             builder: (context) => EditProfileScreen(
                               canPop: false,
+                              profileMode: ProfileMode.registration,
                             ),
                           ),
                         );
@@ -95,6 +97,7 @@ class _LogInScreenState extends State<LogInScreen> {
                           MaterialPageRoute(
                             builder: (context) => EditProfileScreen(
                               canPop: false,
+                              profileMode: ProfileMode.registration,
                             ),
                           ),
                         );

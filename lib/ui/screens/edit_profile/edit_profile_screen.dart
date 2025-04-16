@@ -17,15 +17,17 @@ import 'dart:io';
 
 class EditProfileScreen extends StatelessWidget {
   final bool canPop;
+  final profileMode;
   EditProfileScreen({
     Key? key,
     this.canPop = true,
+    this.profileMode = ProfileMode.update,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => EditProfileViewModel(),
+      create: (context) => EditProfileViewModel(mode: profileMode),
       child: Consumer2<EditProfileViewModel, UserProvider>(
           builder: (context, viewModel, userProvider, child) {
         return PopScope(
@@ -54,7 +56,7 @@ class EditProfileScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () async {
                       if (viewModel.isProfileComplete) {
-                        await viewModel.updateUser();
+                        await viewModel.updateUser(context);
                         userProvider.getUser();
                         if (!canPop) {
                           Navigator.pushAndRemoveUntil(

@@ -1,5 +1,7 @@
+import 'package:code_structure/core/model/app_user.dart';
 import 'package:code_structure/core/services/stripe_service.dart';
 import 'package:code_structure/ui/screens/checkout/checkout_success_screen.dart';
+import 'package:code_structure/ui/screens/stripe_webview/stripe_webview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:code_structure/core/constants/colors.dart';
@@ -11,11 +13,13 @@ import 'package:code_structure/core/providers/call_minutes_provider.dart';
 class CartSummaryScreen extends StatelessWidget {
   final List<CartItem> items;
   final double discountAmount;
+  final AppUser user;
 
   const CartSummaryScreen({
     super.key,
     required this.items,
     this.discountAmount = 0.0,
+    required this.user,
   });
 
   double get subtotal =>
@@ -51,15 +55,28 @@ class CartSummaryScreen extends StatelessWidget {
   }) async {
     try {
       // Use the Stripe service to process the payment
-      final result = await StripeService.purchaseCallMinutes(
-        context,
-        totalAmount,
-        audioMinutes,
-        videoMinutes,
-        paymentMethod,
-      );
+      // final result = await StripeServices.purchaseCallMinutes(
+      //   context,
+      //   totalAmount,
+      //   audioMinutes,
+      //   videoMinutes,
+      //   paymentMethod,
+      // );
 
-      if (result.isSuccess) {
+      final result = await StripeServices.createCheckoutSession(
+          totalAmount, 'USD', user.connectedAccountId ?? '');
+
+      if (result != null || result != '') {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return StripeWebview(
+                url: result,
+              );
+            },
+          ),
+        );
         // Refresh call minutes data
         final callMinutesProvider =
             Provider.of<CallMinutesProvider>(context, listen: false);
@@ -77,7 +94,7 @@ class CartSummaryScreen extends StatelessWidget {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Payment failed: ${result.errorMessage}'),
+            content: Text('Payment failed: ${result}'),
             backgroundColor: Colors.red,
           ),
         );

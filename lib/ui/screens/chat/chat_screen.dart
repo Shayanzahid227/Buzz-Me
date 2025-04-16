@@ -33,6 +33,7 @@ class ChatScreen extends StatefulWidget {
   final String chatId;
   final String currentUserId;
   final String? otherUserId;
+  final AppUser? otherUser;
   final String? otherUserfcm;
   final bool isGroup;
   final String title;
@@ -42,6 +43,7 @@ class ChatScreen extends StatefulWidget {
     required this.chatId,
     required this.currentUserId,
     this.otherUserId,
+    this.otherUser,
     this.otherUserfcm,
     required this.isGroup,
     required this.title,
@@ -314,14 +316,14 @@ class _ChatScreenState extends State<ChatScreen> {
           if (!widget.isGroup)
             IconButton(
               onPressed: () {
-                _checkAndStartCall(context, 'audio');
+                _checkAndStartCall(context, 'audio', widget.otherUser!);
               },
               icon: Icon(Icons.call, color: lightOrangeColor),
             ),
           if (!widget.isGroup)
             IconButton(
               onPressed: () {
-                _checkAndStartCall(context, 'video');
+                _checkAndStartCall(context, 'video', widget.otherUser!);
               },
               icon: Icon(Icons.videocam, color: lightOrangeColor),
             ),
@@ -954,7 +956,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _checkAndStartCall(BuildContext context, String callType) async {
+  Future<void> _checkAndStartCall(
+      BuildContext context, String callType, AppUser otherUser) async {
     final callMinutesProvider =
         Provider.of<CallMinutesProvider>(context, listen: false);
 
@@ -1018,12 +1021,13 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } else {
       // User doesn't have enough minutes, show purchase dialog
-      _showPurchaseDialog(context, callType);
+      _showPurchaseDialog(context, callType, otherUser);
     }
   }
 
   // Show dialog to inform user they need to purchase more minutes
-  void _showPurchaseDialog(BuildContext context, String callType) {
+  void _showPurchaseDialog(
+      BuildContext context, String callType, AppUser otherUser) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1044,7 +1048,9 @@ class _ChatScreenState extends State<ChatScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CartScreen(),
+                  builder: (context) => CartScreen(
+                    user: otherUser,
+                  ),
                 ),
               );
             },

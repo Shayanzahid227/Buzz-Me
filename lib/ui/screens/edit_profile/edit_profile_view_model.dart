@@ -6,7 +6,10 @@ import 'package:code_structure/core/others/base_view_model.dart';
 import 'package:code_structure/core/services/database_services.dart';
 import 'package:code_structure/core/services/storage_services.dart';
 import 'package:code_structure/core/services/image_cache_helper.dart';
+import 'package:code_structure/core/services/stripe_service.dart';
+import 'package:code_structure/ui/screens/stripe_webview/stripe_webview.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geocoding/geocoding.dart';
@@ -18,6 +21,7 @@ class EditProfileViewModel extends BaseViewModel {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final DatabaseServices _databaseServices = DatabaseServices();
+
   final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -32,9 +36,6 @@ class EditProfileViewModel extends BaseViewModel {
   final List<String> predefinedGenders = [
     'Male',
     'Female',
-    'Non-binary',
-    'Other',
-    'Prefer not to say',
   ];
 
   final List<String> predefinedLookingFor = [
@@ -68,31 +69,30 @@ class EditProfileViewModel extends BaseViewModel {
       createdAt: DateTime.now(),
     );
 
-    if (isRegistration) {
-      // For new registration, create a new AppUser instance
-      appUser = AppUser(
-        images: List.filled(6, null),
-        interests: [],
-        lookingFor: [],
-        createdAt: DateTime.now(),
-      );
-    } else {
-      // For profile update, fetch existing user data
-      try {
-        final userData =
-            await _databaseServices.getUser(_auth.currentUser!.uid);
-        appUser = userData ??
-            AppUser(
-              images: List.filled(6, null),
-              interests: [],
-              lookingFor: [],
-              createdAt: DateTime.now(),
-            );
-      } catch (e) {
-        print('Error fetching user data: $e');
-        // Handle error appropriately
-      }
+    // if (isRegistration) {
+    //   // For new registration, create a new AppUser instance
+    //   appUser = AppUser(
+    //     images: List.filled(6, null),
+    //     interests: [],
+    //     lookingFor: [],
+    //     createdAt: DateTime.now(),
+    //   );
+    // } else {
+    // For profile update, fetch existing user data
+    try {
+      final userData = await _databaseServices.getUser(_auth.currentUser!.uid);
+      appUser = userData ??
+          AppUser(
+            images: List.filled(6, null),
+            interests: [],
+            lookingFor: [],
+            createdAt: DateTime.now(),
+          );
+    } catch (e) {
+      print('Error fetching user data: $e');
+      // Handle error appropriately
     }
+    // }
 
     setState(ViewState.idle);
   }
@@ -105,7 +105,7 @@ class EditProfileViewModel extends BaseViewModel {
             (appUser.images?.any((img) => img != null) ?? false));
   }
 
-  Future<bool> updateUser() async {
+  Future<bool> updateUser(context) async {
     try {
       setState(ViewState.busy);
 
@@ -133,6 +133,31 @@ class EditProfileViewModel extends BaseViewModel {
 
       // Update user in database
       await _databaseServices.setUser(appUser);
+
+      if (isRegistration &&
+          (appUser.connectedAccountId == null ||
+              appUser.connectedAccountId == '')) {
+        // create connect account
+        final data = await StripeServices.createAccount();
+
+        // use data['accountLink'] to redirect user to Stripe using webview
+        // or open in browser
+
+        print(data.toString());
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StripeWebview(
+              url: data['accountLink']['url'],
+            ),
+          ),
+        );
+
+        appUser.connectedAccountId = data['account'];
+
+        _databaseServices.setUser(appUser);
+      }
 
       setState(ViewState.idle);
       return true;

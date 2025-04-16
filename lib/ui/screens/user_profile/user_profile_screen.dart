@@ -119,6 +119,7 @@ class UserProfileScreen extends StatelessWidget {
                             chatId: chatId,
                             currentUserId: currentUserId,
                             otherUserId: appUser.uid!,
+                            otherUser: appUser,
                             otherUserfcm: appUser.fcmToken,
                             isGroup: false,
                             title: appUser.userName ?? '',

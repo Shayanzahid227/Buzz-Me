@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:code_structure/core/constants/endpoints.dart';
 import 'package:http/http.dart' as http;
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -45,9 +46,9 @@ class AgoraService {
       final idToken = await user.getIdToken();
       log('Got Firebase ID token');
 
-      log('Making request to token server: $serverUrl');
+      log('Making request to token server: $generateAgoraTokenUrl');
       final response = await http.post(
-        Uri.parse(serverUrl),
+        Uri.parse(generateAgoraTokenUrl),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',

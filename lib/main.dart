@@ -34,7 +34,7 @@ void main() async {
   );
 
   // Initialize Stripe
-  await StripeService.initialize();
+  await StripeServices.initialize();
 
   runApp(const MyApp());
 }

@@ -1,3 +1,4 @@
+import 'package:code_structure/core/model/app_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:code_structure/core/constants/colors.dart';
@@ -28,10 +29,12 @@ class CartItem {
 
 class CartScreen extends StatefulWidget {
   final bool fromInsufficientMinutes;
+  final AppUser user;
 
   const CartScreen({
     super.key,
     this.fromInsufficientMinutes = false,
+    required this.user,
   });
 
   @override
@@ -360,6 +363,7 @@ class _CartScreenState extends State<CartScreen> {
                     builder: (context) => CartSummaryScreen(
                       items: items,
                       discountAmount: discountAmount,
+                      user: widget.user,
                     ),
                   ),
                 );

@@ -3,6 +3,9 @@ import 'package:code_structure/core/model/call_minutes.dart';
 
 class AppUser {
   String? uid;
+  String? connectedAccountId;
+  String? connectedAccountStatus;
+  String? connectedAccountType;
 
   String? userName;
   List<String?>? images = [
@@ -61,6 +64,9 @@ class AppUser {
 
   AppUser({
     this.uid,
+    this.connectedAccountId,
+    this.connectedAccountStatus,
+    this.connectedAccountType,
     this.userName,
     this.images = const [
       null,
@@ -106,6 +112,9 @@ class AppUser {
 
   AppUser copyWith({
     String? uid,
+    String? connectedAccountId,
+    String? connectedAccountStatus,
+    String? connectedAccountType,
     String? userName,
     List<String?>? images,
     DateTime? createdAt,
@@ -143,6 +152,10 @@ class AppUser {
   }) {
     return AppUser(
       uid: uid ?? this.uid,
+      connectedAccountId: connectedAccountId ?? this.connectedAccountId,
+      connectedAccountStatus:
+          connectedAccountStatus ?? this.connectedAccountStatus,
+      connectedAccountType: connectedAccountType ?? this.connectedAccountType,
       userName: userName ?? this.userName,
       images: images ?? this.images,
       createdAt: createdAt ?? this.createdAt,
@@ -183,6 +196,9 @@ class AppUser {
   Map<String, dynamic> toJson() {
     return {
       'uid': uid,
+      'connectedAccountId': connectedAccountId ?? '',
+      'connectedAccountStatus': connectedAccountStatus ?? '',
+      'connectedAccountType': connectedAccountType ?? '',
       'userName': userName ?? '',
       'images': images,
       'createdAt':
@@ -226,6 +242,9 @@ class AppUser {
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
       uid: json['uid'],
+      connectedAccountId: json['connectedAccountId'],
+      connectedAccountStatus: json['connectedAccountStatus'],
+      connectedAccountType: json['connectedAccountType'],
       userName: json['userName'],
       images: List<String?>.from(json['images']),
       createdAt: (json['createdAt'] as Timestamp).toDate(),

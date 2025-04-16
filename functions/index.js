@@ -10,7 +10,9 @@
 const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
-const stripe = require("stripe")("sk_live_gSNMEgnph76aYVgDPeEoosiz"); // Replace with your Stripe secret key
+const stripe = require("stripe")("sk_test_51Lxl0OLy0LoiWOlnUD6hTUGXbyYHfe1JVk3kMOMtu4xR5fY52UDxEPC9aJnRZ9GM3wBRD2X5Jtt8IiXiNpksgzkF00WpLMRVTX",  {
+  apiVersion: "2023-10-16",
+}); // Replace with your Stripe secret key
 const { RtcTokenBuilder, RtmTokenBuilder, RtcRole } = require('agora-access-token');
 const functions = require('firebase-functions');
 
@@ -29,59 +31,72 @@ admin.initializeApp();
 
 
 
-exports.createAccountLink = onRequest(async(req, res) => {
-  try {
-    const { account } = req.body;
+// exports.createAccountLink = onRequest(async(req, res) => {
+//   try {
+//     const { account } = req.body;
+
+//     const accountLink = await stripe.accountLinks.create({
+//       account: account,
+//       return_url: `${req.headers.origin}/return/${account}`,
+//       refresh_url: `${req.headers.origin}/refresh/${account}`,
+//       type: "account_onboarding",
+//     });
+
+//     res.json(accountLink);
+//   } catch (error) {
+//     console.error(
+//       "An error occurred when calling the Stripe API to create an account link:",
+//       error
+//     );
+//     res.status(500);
+//     res.send({ error: error.message });
+//   }
+// });
+
+exports.createAccount = onRequest(async (request, response) => {
+ // Enable CORS
+ response.set("Access-Control-Allow-Origin", "*");
+ response.set("Access-Control-Allow-Methods", "POST");
+ response.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+ // Handle preflight requests
+ if (request.method === "OPTIONS") {
+   response.status(204).send("");
+   return;
+ }
+
+ try {
+   // Verify Firebase Auth token
+   const authHeader = request.headers.authorization;
+   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+     throw new Error("No authorization token provided");
+   }
+
+   const idToken = authHeader.split("Bearer ")[1];
+   const decodedToken = await admin.auth().verifyIdToken(idToken);
+   const userId = decodedToken.uid;
+
+
+   const account = await stripe.accounts.create({});
 
     const accountLink = await stripe.accountLinks.create({
-      account: account,
-      return_url: `${req.headers.origin}/return/${account}`,
-      refresh_url: `${req.headers.origin}/refresh/${account}`,
+      account: account.id,
+      return_url: `https://example.com/return/${account.id}`,
+      refresh_url: `https://example.com/refresh/${account.id}`,
       type: "account_onboarding",
     });
 
-    res.json(accountLink);
-  } catch (error) {
-    console.error(
-      "An error occurred when calling the Stripe API to create an account link:",
-      error
-    );
-    res.status(500);
-    res.send({ error: error.message });
-  }
-});
-
-exports.createAccount = onRequest(async (req, res) => {
-  try {
-    const account = await stripe.accounts.create({
-      controller: {
-        stripe_dashboard: {
-          type: "none",
-        },
-        fees: {
-          payer: "application"
-        },
-        losses: {
-          payments: "application"
-        },
-        requirement_collection: "application",
-      },
-      capabilities: {
-        transfers: {requested: true}
-      },
-      country: "DE",
-    });
-
-    res.json({
+    response.json({
       account: account.id,
+      accountLink: accountLink,
     });
   } catch (error) {
     console.error(
       "An error occurred when calling the Stripe API to create an account",
       error
     );
-    res.status(500);
-    res.send({ error: error.message });
+    response.status(500);
+    response.send({ error: error.message });
   }
 });
 
@@ -142,10 +157,10 @@ exports.createCheckoutSession = onRequest(async (request, response) => {
       success_url: 'https://example.com/success?session_id={CHECKOUT_SESSION_ID}',
     });
 
-    // Return the client secret and payment intent ID
+    // Return the client secret and link
     response.json({
       link: session.url,
-  
+      
     });
   } catch (error) {
     logger.error("Error creating payment intent:", error);
